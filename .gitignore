@@ -1,0 +1,9 @@
+node_modules/
+www/
+android/
+.gradle/
+.idea/
+*.iml
+local.properties
+.DS_Store
+Thumbs.db

@@ -1,0 +1,11 @@
+{
+  "appId": "com.radalert.app",
+  "appName": "Radar Alert",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

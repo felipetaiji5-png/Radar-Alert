@@ -1,0 +1,5 @@
+Dados de radares: projeto Pardal (Murkiriel), https://github.com/Murkiriel/pardal
+A base Pardal é disponibilizada sob Open Database License (ODbL) 1.0. Consulte a licença e o repositório original antes de redistribuir uma base derivada ou fazer uso comercial.
+Cartografia: © OpenStreetMap contributors, https://www.openstreetmap.org/copyright
+Leaflet: https://leafletjs.com/ (BSD 2-Clause License)
+Este protótipo não é oficial nem endossado por órgão de trânsito e não substitui a sinalização viária.

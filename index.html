@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#101317" />
+  <meta name="description" content="Radar Alert — protótipo web de alertas informativos de radares em São Paulo." />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://tile.openstreetmap.org" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./refined.css" />
+  <title>Radar Alert — São Paulo</title>
+</head>
+<body data-active-screen="painel">
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#painel" aria-label="Radar Alert início">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19a8 8 0 0 1 16 0M7 19a5 5 0 0 1 10 0M10 19a2 2 0 0 1 4 0M12 4v3m7 0-2 2M5 7l2 2"/></svg>
+        </span>
+        <span><strong>Radar Alert</strong><small>São Paulo · v0.15.1</small></span>
+      </a>
+      <nav class="desktop-nav" aria-label="Seções do aplicativo">
+        <a href="#painel" data-screen-link="painel">Painel</a>
+        <a href="#mapa" data-screen-link="mapa">Mapa</a>
+        <a href="#via" data-screen-link="via">Diagnóstico</a>
+        <a href="#proximos" data-screen-link="proximos">Radares</a>
+      </nav>
+      <div class="top-actions">
+        <span id="gpsStatus" class="pill"><i></i> GPS DESLIGADO</span>
+        <button id="diagBtn" class="icon-btn" title="Diagnóstico do sistema" aria-label="Abrir diagnóstico do sistema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-7"/></svg><span>Diagnóstico</span></button>
+        <button id="settingsBtn" class="icon-btn" title="Configurações e alertas" aria-label="Abrir configurações"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg><span>Ajustes</span></button>
+        <button id="installBtn" class="icon-btn hidden" title="Instalar aplicativo">Instalar</button>
+      </div>
+    </header>
+
+    <div id="staleDataBanner" class="alert-banner hidden">
+      <span class="banner-icon">⚠</span>
+      <span>Atenção: A base de dados local possui mais de 30 dias. Conecte-se à internet para atualizar.</span>
+    </div>
+
+    <main id="painel">
+      <section class="intro-row home-intro">
+        <div>
+          <div class="eyebrow" id="roadNameTag">Sua viagem</div>
+          <h1 id="radarHeadline">Aguardando GPS</h1>
+          <p class="intro-copy">Avisos apenas quando a via e o sentido estiverem confirmados.</p>
+        </div>
+        <div class="data-chip">
+          <span class="data-dot" id="networkDot"></span>
+          <span>
+            <b id="datasetStatus">Carregando base…</b>
+            <small id="datasetMeta">Pardal · São Paulo</small>
+          </span>
+        </div>
+      </section>
+
+      <section class="dashboard-grid" data-screen="painel">
+        <article class="panel primary-panel">
+          <div class="panel-head">
+            <div>
+              <div class="micro-label" id="matchedRoadLabel">Via não identificada</div>
+              <h2 id="radarSubhead">Inicie o monitoramento</h2>
+            </div>
+            <span id="confidenceBadge" class="confidence neutral">Sem posição</span>
+          </div>
+
+          <div class="drive-mode-label" id="driveModeLabel">Painel de direção</div>
+          <div class="cockpit-strip">
+            <div><span>Velocidade atual</span><strong><b id="cockpitSpeed">—</b><small>km/h</small></strong></div>
+            <div><span>Via detectada</span><strong id="cockpitRoadState">AGUARDANDO</strong></div>
+          </div>
+          <div class="radar-main">
+            <div class="distance-area">
+              <div class="micro-label" id="distanceTypeLabel">Próximo radar · distância aproximada</div>
+              <div class="big-distance" id="distanceValue">—<small>m</small></div>
+              <div class="road-label" id="roadLabel">Ative o GPS para estimar a proximidade de equipamentos cadastrados.</div>
+            </div>
+            <div class="speed-area">
+              <div class="micro-label">Limite cadastrado</div>
+              <div class="speed-sign"><strong id="speedLimit">—</strong><span>km/h</span></div>
+            </div>
+          </div>
+
+          <details class="metrics-details"><summary>Detalhes da sessão</summary>
+          <div class="metrics">
+            <div class="metric"><span>Velocidade GPS</span><b id="currentSpeed">—</b></div>
+            <div class="metric"><span>Precisão GPS</span><b id="gpsAccuracy">—</b></div>
+            <div class="metric"><span>Modo do GPS</span><b id="gpsMode">—</b></div>
+            <div class="metric"><span>Radares na base</span><b id="radarCount">—</b></div>
+          </div></details>
+
+          <div class="button-row">
+            <button id="startBtn" class="btn btn-primary"><span class="btn-symbol">◎</span> Iniciar monitoramento</button>
+            <button id="stopBtn" class="btn btn-danger hidden">Parar monitoramento</button>
+            <button id="refreshBtn" class="btn btn-secondary"><span aria-hidden="true">↻</span> Atualizar radares</button>
+          </div>
+
+          <div class="notice" id="mainNotice" role="status">
+            <span class="notice-icon">i</span>
+            <span>Carregando o motor geoespacial e a base de radares de São Paulo.</span>
+          </div>
+          <p class="gps-error hidden" id="gpsError"></p>
+        </article>
+
+        <aside class="panel side-panel" id="equipmentPanel">
+          <div class="panel-head compact">
+            <div><div class="eyebrow">Radar</div><h2>Detalhes do equipamento</h2></div>
+            <button type="button" class="equipment-toggle" id="equipmentToggle" aria-controls="equipmentBody" aria-expanded="false">Exibir <span aria-hidden="true">⌄</span></button>
+          </div>
+          <div class="equipment-body" id="equipmentBody">
+          <div class="next-detail"><span>Tipo do equipamento</span><b id="radarKind">—</b></div>
+          <div class="next-detail"><span>Sentido cadastrado</span><b id="radarDirection">—</b></div>
+          <div class="next-detail"><span>Origem do registro</span><b id="radarSource">—</b></div>
+          <div class="next-detail"><span>Confiança do dado</span><b id="radarDataConfidence">—</b></div>
+          <div class="side-divider"></div>
+          <div class="next-detail"><span>Modo de Operação</span><b id="navEngineMode">Não conectado — malha viária ausente</b></div>
+          <div class="next-detail"><span>Último fix válido</span><b id="lastFixTime">Nenhum</b></div>
+          <div class="disclaimer">
+            <strong>Aviso Legal</strong><br>
+            A sinalização de trânsito física na via sempre prevalece sobre os dados do aplicativo. Não utilize o celular enquanto dirige.
+          </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="insights-workspace" id="via" data-screen="via" aria-labelledby="insightsTitle">
+        <div class="workspace-head">
+          <div><div class="eyebrow">Informações técnicas</div><h2 id="insightsTitle">Diagnóstico</h2>
+          <p>Veja a qualidade do GPS, a identificação da rua e os testes locais.</p></div>
+          <button type="button" class="btn btn-secondary" id="diagOpenInlineBtn">Ver logs completos</button>
+        </div>
+        <div class="insights-grid">
+          <article class="panel health-panel">
+            <div class="health-heading"><div><span class="micro-label">Sistema</span><h3>Estado dos sistemas</h3></div><span id="healthSummary">Verificando…</span></div>
+            <div id="healthList" class="health-list" aria-live="off"></div>
+            <p class="health-footnote">Uma via visualmente próxima não equivale a uma via confirmada para alertas.</p>
+          </article>
+          <section class="match-insight" aria-labelledby="matchTitle">
+            <div class="match-insight-head">
+              <div>
+                <span class="micro-label">Localização na rua</span>
+                <h3 id="matchTitle">Qual rua foi identificada?</h3>
+              </div>
+              <span id="matchBadge" class="match-badge idle">AGUARDANDO</span>
+            </div>
+            <strong class="match-road" id="matchRoad">Nenhuma via identificada</strong>
+            <p id="matchExplanation" class="match-explanation">Inicie o monitoramento para analisar as ruas próximas.</p>
+            <div class="match-facts" aria-label="Métricas da correspondência de via">
+              <div><span>Distância da rua</span><b id="matchOffset">—</b></div>
+              <div><span>Diferença de direção</span><b id="matchAngle">—</b></div>
+              <div><span>Rumo do veículo</span><b id="matchHeading">—</b></div>
+              <div><span>Trechos analisados</span><b id="matchCandidates">—</b></div>
+            </div>
+            <div class="candidate-section" id="candidateSection" hidden>
+              <div class="candidate-header"><span>Ruas próximas</span><small>A proximidade não confirma a via</small></div>
+              <div class="candidate-list" id="candidateList"></div>
+            </div>
+            <div class="stability-card" aria-live="off">
+              <span class="stability-icon" aria-hidden="true"></span>
+              <div><strong id="matchStabilityLabel">Sem histórico</strong><p id="matchStabilityDetail">Aguardando leituras GPS válidas.</p></div>
+              <span class="stability-count" id="matchStabilityCount">0 trocas</span>
+            </div>
+            <details class="insight-help">
+              <summary>Por que minha via ainda não foi confirmada?</summary>
+              <p>O GPS informa uma posição, mas não necessariamente para qual lado você está se deslocando. Perto de ruas paralelas ou parado, vários trechos podem parecer possíveis. A lista acima é somente diagnóstico; não ativa alertas.</p>
+            </details>
+            <div class="match-insight-footer">
+              <span id="matchReason">Sem posição GPS</span>
+              <button type="button" id="matchDetailsBtn" class="text-action">Ver detalhes</button>
+            </div>
+          </section>
+
+        </div>
+        <article class="panel sim-panel" id="simulador">
+          <div class="sim-top"><div><span class="micro-label">Testes locais</span><h3>Simulador de trajetos</h3>
+            <p>Teste o mesmo Map Matching e motor de avisos com dados inteiramente fictícios. Não usa GPS, internet ou notificações reais.</p></div><span class="sim-watermark">SIMULAÇÃO</span></div>
+          <div class="sim-layout">
+            <div class="sim-canvas">
+              <div class="sim-road-art" role="img" aria-label="Esquema ilustrativo de uma via e um radar fictícios">
+                <div class="sim-dash-road"></div><div class="sim-car" id="simCar"><span>◆</span></div><div class="sim-radar-marker">R</div>
+                <div class="sim-start">INÍCIO</div><div class="sim-end">RADAR FICTÍCIO</div>
+              </div>
+              <div class="sim-progress-bar"><div id="simProgress" style="width:0%"></div></div>
+              <div class="sim-progress-text"><span>Reprodução local</span><strong id="simProgressText">0 / 34 pontos</strong></div>
+            </div>
+            <div class="sim-controls">
+              <label for="simScenario">Cenário de teste</label>
+              <select id="simScenario"><option value="straight">Via única + radar</option><option value="parallel">Pistas paralelas</option><option value="stopped">Veículo parado</option></select>
+              <p id="simSceneDescription">Testa confirmação, distância pela rua e faixas de aviso.</p>
+              <div class="sim-mini-grid">
+                <div><span>MAP MATCHING</span><strong id="simStatus">PRONTO</strong></div>
+                <div><span>RADAR FICTÍCIO</span><strong id="simDistance">—</strong></div>
+              </div>
+              <div class="sim-meta"><strong id="simRoad">Via Exemplo (fictícia)</strong><small id="simReason">Nenhuma localização simulada processada</small></div>
+              <div class="sim-buttons"><button type="button" class="btn btn-primary" id="simRunBtn">Executar trajetória</button><button type="button" class="btn btn-secondary" id="simStepBtn">Próximo ponto</button><button type="button" class="btn btn-ghost" id="simResetBtn">Reiniciar</button></div>
+            </div>
+          </div>
+          <div class="sim-results"><strong>Eventos de aviso simulados</strong><div id="simEventList" aria-live="polite"><p>Nenhum aviso simulado até este ponto.</p></div></div>
+          <p class="sim-disclaimer">Ambiente de laboratório: não gera alertas sonoros, não atualiza o serviço Android e não representa radares ou vias reais.</p>
+        </article>
+      </section>
+
+      <section class="panel map-panel" id="mapa" data-screen="mapa">
+        <div class="map-heading">
+          <div>
+            <div class="eyebrow">Mapa</div>
+            <h2>Ruas e radares</h2>
+            <p id="mapSubtitle">Veja a localização aproximada e os equipamentos cadastrados. Alertas por rota exigem rua confirmada.</p>
+          </div>
+          <div class="map-legend">
+            <span><i class="legend-user"></i> GPS</span>
+            <span><i class="legend-accuracy"></i> Precisão</span>
+            <span><i class="legend-radar"></i> Radares próximos</span>
+            <span><i class="legend-other"></i> Outros radares</span><span><i class="legend-candidate"></i> Via candidata</span>
+          </div>
+        </div>
+        <div class="map-frame" id="mapFrame">
+          <div id="map" class="map"></div>
+          <div class="map-tools" aria-label="Controles do mapa">
+            <button type="button" class="map-tool" id="locateMapBtn" aria-label="Centralizar mapa na localização GPS" title="Centralizar no GPS"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg></button>
+            <button type="button" class="map-tool" id="expandMapBtn" aria-expanded="false" aria-label="Ampliar mapa" title="Ampliar mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+          </div>
+          <span class="map-accuracy" id="mapAccuracyLabel" aria-live="polite">Precisão do GPS: aguardando</span>
+          <span class="map-state" id="mapState">Localização ainda não disponível</span>
+        </div>
+        <div class="map-bottom">
+          <span>Dados © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors · ODbL</a></span>
+          <span id="visibleCount">Nenhum radar exibido</span>
+        </div>
+        <div class="map-actions">
+          <button type="button" id="toggleAccuracyBtn" class="trail-toggle accuracy-toggle" aria-pressed="true" title="Exibir a área aproximada de incerteza do GPS">Ocultar área de precisão</button>
+          <button type="button" id="toggleTrailBtn" class="trail-toggle" aria-pressed="false" title="Mostra somente os últimos 50 pontos GPS desta sessão; não salva histórico">Mostrar trilha GPS</button>
+          <button type="button" id="refreshRoadBtn" class="text-action">Atualizar ruas OSM desta região</button>
+          <button type="button" id="prepareMapRegionBtn" class="text-action" title="Baixa uma região de até 3 km ao redor do centro do mapa; requer internet e GPS iniciado">Preparar área do mapa</button>
+          <span>A área de precisão é uma estimativa, não é um limite exato de erro.</span>
+        </div>
+      </section>
+
+      <section class="bottom-grid" id="proximos" data-screen="proximos">
+        <article class="panel nearby-panel">
+          <div class="map-heading small-heading">
+            <div><div class="eyebrow">Equipamentos cadastrados</div><h2>Radares próximos</h2></div>
+            <span class="muted-tag">Até 5 km</span>
+          </div>
+          <div id="nearbyList" class="nearby-list">
+            <div class="empty-list">A lista de radares aparece quando o GPS estiver ativo.</div>
+          </div>
+        </article>
+
+        <article class="panel source-panel">
+          <div class="eyebrow">Sobre os dados</div>
+          <h2>Privacidade e fontes</h2>
+          <p>
+            A posição GPS bruta é processada localmente. A análise de estabilidade da via mantém apenas nomes de ruas candidatas e horários por até 3 minutos na memória da sessão, sem persistência. Para carregar ruas próximas, uma coordenada aproximada é enviada à Overpass API; o histórico do percurso não é enviado a um servidor do Radar Alert.
+          </p>
+          <div class="source-stats">
+            <div><b id="activeCount">—</b><span>ativos no catálogo</span></div>
+            <div><b id="inactiveCount">—</b><span>filtrados (inativos)</span></div>
+            <div><b id="withLimitCount">—</b><span>com velocidade</span></div>
+          </div>
+          <div class="action-links">
+            <a href="#" id="openPrivacyModalLink" class="source-link">Ler Política de Privacidade (LGPD) ↗</a>
+            <a href="https://github.com/Murkiriel/pardal" target="_blank" rel="noopener" class="source-link">Projeto Pardal (Licença ODbL) ↗</a>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <!-- Modal de Diagnóstico -->
+    <div id="diagModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Painel de Diagnóstico do Sistema</h3>
+          <button class="close-btn" id="closeDiagBtn" aria-label="Fechar diagnóstico">&times;</button>
+        </div>
+        <div class="modal-body">
+          <table class="diag-table">
+            <tbody>
+              <tr><td>Estado do GPS</td><td id="diagGpsStatus">Desligado</td></tr>
+              <tr><td>Modo Adaptativo</td><td id="diagGpsMode">Parado / Economia</td></tr>
+              <tr><td>Precisão Estimada</td><td id="diagAccuracy">—</td></tr>
+              <tr><td>Velocidade Real</td><td id="diagSpeed">—</td></tr>
+              <tr><td>Serviço de Segundo Plano</td><td id="diagServiceStatus">Inativo</td></tr>
+              <tr><td>Wake Lock de tela</td><td id="diagWakeLock">Inativo</td></tr>
+              <tr><td>Regiões OSM para segundo plano</td><td id="diagCachedRegions">—</td></tr>
+              <tr><td>Conexão com a Internet</td><td id="diagNetwork">Online</td></tr>
+              <tr><td>Base de Radares</td><td id="diagDatabase">0 registros carregados</td></tr>
+              <tr><td>Idade da Base Local</td><td id="diagDatasetAge">Não informada</td></tr>
+              <tr><td>Motor de Map Matching</td><td id="diagMapMatch">Não conectado — malha viária ausente</td></tr>
+              <tr><td>Via / candidata</td><td id="diagMatchRoad">—</td></tr>
+              <tr><td>Motivo da decisão</td><td id="diagMatchReason">Sem posição GPS</td></tr>
+              <tr><td>Distância GPS → via</td><td id="diagMatchOffset">—</td></tr>
+              <tr><td>Diferença de direção</td><td id="diagMatchAngle">—</td></tr>
+              <tr><td>Rumo estimado</td><td id="diagMatchHeading">—</td></tr>
+              <tr><td>Trechos analisados</td><td id="diagMatchCandidates">—</td></tr>
+              <tr><td>Vias consideradas</td><td id="diagMatchAlternatives">—</td></tr>
+              <tr><td>Estabilidade da via</td><td id="diagRoadStability">—</td></tr>
+              <tr><td>Saltos GPS Rejeitados</td><td id="diagOutliersCount">0</td></tr>
+            </tbody>
+          </table>
+          <h4>Histórico Recente de Eventos de Diagnóstico</h4>
+          <div id="diagLogBox" class="diag-log-box"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="copyDiagBtn" class="btn btn-secondary">Copiar Diagnóstico</button>
+          <button id="closeDiagBtn2" class="btn btn-primary">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Configurações e Preferências -->
+    <div id="settingsModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Preferências de Alerta e Sistema</h3>
+          <button class="close-btn" id="closeSettingsBtn" aria-label="Fechar ajustes">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="settings-group">
+            <h4>Alertas por Voz</h4>
+            <label class="switch-row">
+              <span><b>Ativar voz sintetizada</b><small>Anuncia radar e velocidade</small></span>
+              <input id="prefVoiceToggle" type="checkbox" checked><i></i>
+            </label>
+            <div class="slider-row">
+              <label>Volume do Alerta: <span id="volLabel">100%</span></label>
+              <input id="voiceVolSlider" type="range" min="0" max="100" value="100">
+            </div>
+            <button id="testVoiceBtn" class="btn btn-secondary btn-sm">▶ Testar Voz de Alerta</button>
+            <label class="switch-row">
+              <span><b>Notificações do navegador</b><small>Exige permissão concedida pelo navegador</small></span>
+              <input id="prefNotificationsToggle" type="checkbox"><i></i>
+            </label>
+          </div>
+
+          <div class="settings-group">
+            <h4>Distâncias dos Avisos</h4>
+            <div class="select-row">
+              <label>Primeiro Aviso (Distância)</label>
+              <select id="prefTierFar">
+                <option value="1200">1.200 metros</option>
+                <option value="1000" selected>1.000 metros (Padrão)</option>
+                <option value="800">800 metros</option>
+              </select>
+            </div>
+            <div class="select-row">
+              <label>Segundo Aviso (Intermediário)</label>
+              <select id="prefTierMid">
+                <option value="500" selected>500 metros (Padrão)</option>
+                <option value="400">400 metros</option>
+              </select>
+            </div>
+            <div class="select-row">
+              <label>Aviso de Proximidade</label>
+              <select id="prefTierNear">
+                <option value="200" selected>200 metros (Padrão)</option>
+                <option value="150">150 metros</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h4>Exibição durante a condução</h4>
+            <label class="switch-row">
+              <span><b>Modo direção automático</b><small>Após movimento consistente, simplifica o painel. Não altera alertas.</small></span>
+              <input id="prefDriveModeToggle" type="checkbox" checked><i></i>
+            </label>
+          </div>
+          <div class="settings-group">
+            <h4>Acessibilidade da interface</h4>
+            <label class="switch-row">
+              <span><b>Contraste reforçado</b><small>Destaca painéis, bordas e textos no celular</small></span>
+              <input id="prefContrastToggle" type="checkbox"><i></i>
+            </label>
+          </div>
+          <div class="settings-group">
+            <h4>Privacidade e Armazenamento Local</h4>
+            <p class="privacy-note">Seus dados e bases são armazenados no banco IndexedDB deste aparelho.</p>
+            <button id="clearDataBtn" class="btn btn-danger btn-sm">🗑 Limpar Cache e Dados Locais</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="saveSettingsBtn" class="btn btn-primary">Salvar e Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Privacidade (LGPD) -->
+    <div id="privacyModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Política de Privacidade e Proteção de Dados (LGPD)</h3>
+          <button class="close-btn" id="closePrivacyBtn" aria-label="Fechar política de privacidade">&times;</button>
+        </div>
+        <div class="modal-body markdown-content">
+          <h4>1. Processamento da localização</h4>
+          <p>O Radar Alert não possui backend próprio nem mantém histórico de percursos. A posição atual é processada no aparelho. No Android, o serviço de localização em primeiro plano continua ativo durante a sessão iniciada pelo usuário e envia os pontos GPS ao WebView local quando ele está visível.</p>
+          <h4>2. Serviços externos</h4>
+          <p>A base de radares é baixada do GitHub/jsDelivr. Quando a geometria viária não está em cache, o aplicativo envia uma coordenada arredondada para três casas decimais como centro da consulta à Overpass API. O provedor de tiles do OpenStreetMap recebe solicitações das áreas exibidas. Esses provedores podem receber endereço IP e metadados técnicos de conexão.</p>
+          <h4>3. Monitoramento em segundo plano no Android</h4>
+          <p>O monitoramento nativo começa somente após ação explícita do usuário com o aplicativo visível e mantém uma notificação persistente. Quando a interface está suspensa, o serviço nativo usa a malha OSM previamente sincronizada para fazer Map Matching local e calcular a distância pela rede viária. Se a malha estiver ausente, a posição ficar fora da região carregada ou a correspondência for ambígua, os alertas por estrada são suspensos; não há fallback para distância em linha reta. A disponibilidade também depende das condições do Android, permissões e políticas de bateria do fabricante. Na versão web/PWA, o navegador pode suspender o GPS em segundo plano.</p>
+          <h4>4. Armazenamento e exclusão</h4>
+          <p>A base de radares e geometrias OSM podem ser mantidas em cache local. No Android, uma cópia reduzida da base de radares é armazenada no espaço privado do aplicativo para uso pelo serviço. O mapa e seus tiles não são baixados integralmente para uso offline. A opção de limpar dados apaga os caches e a cópia nativa do aplicativo.</p>
+        </div>
+        <div class="modal-footer">
+          <button id="closePrivacyBtn2" class="btn btn-primary">Entendido</button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="mobile-nav" aria-label="Navegação principal">
+      <a href="#painel" data-screen-link="painel"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Painel</span></a>
+      <a href="#mapa" data-screen-link="mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15m6-12v15"/></svg><span>Mapa</span></a>
+      <a href="#via" data-screen-link="via"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-7"/></svg><span>Diagnóstico</span></a>
+      <a href="#proximos" data-screen-link="proximos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="7" cy="6" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="10" cy="18" r="1.5"/></svg><span>Radares</span></a>
+    </nav>
+    <footer>
+      <span>Radar Alert · <b>v0.15.1</b></span>
+      <span>Ferramenta informativa veicular. Respeite as leis de trânsito e a sinalização física.</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

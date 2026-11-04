@@ -1,0 +1,8 @@
+OpenStreetMap data
+
+A malha viária consultada pelo Radar Alert vem do OpenStreetMap e é disponibilizada sob a Open Database License (ODbL).
+Atribuição: © OpenStreetMap contributors — https://www.openstreetmap.org/copyright
+
+As consultas de geometria são feitas sob demanda à Overpass API. O uso de instâncias públicas é apropriado apenas para prototipagem e testes moderados; uma implantação pública de maior volume deve hospedar ou contratar infraestrutura própria de consulta de dados OSM.
+
+A cartografia de fundo utiliza tiles do OpenStreetMap Standard, sujeitos à política de uso dos servidores de tiles: https://operations.osmfoundation.org/policies/tiles/

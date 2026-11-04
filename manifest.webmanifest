@@ -1,0 +1,12 @@
+{
+  "name": "Radar Alert — São Paulo",
+  "short_name": "Radar Alert",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#101317",
+  "theme_color": "#101317",
+  "description": "Alertas informativos de radares em São Paulo, com PWA e integração Android nativa.",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

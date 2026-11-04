@@ -10,8 +10,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const file = name => readFileSync(path.join(root, name), 'utf8');
 
 test('0.15: seletor nativo escolhe regiões válidas e nunca inventa cobertura', t => {
-  const javac = spawnSync('javac', ['-version'], { encoding: 'utf8' });
-  const java = spawnSync('java', ['-version'], { encoding: 'utf8' });
+  const javac = spawnSync('javac', ['-version'], { encoding: 'utf8', timeout: 15000 });
+  const java = spawnSync('java', ['-version'], { encoding: 'utf8', timeout: 15000 });
   if (javac.error || java.error || javac.status !== 0 || java.status !== 0) {
     t.skip('JDK indisponível neste ambiente; execute com JDK 21 para testar o seletor nativo.');
     return;
@@ -20,9 +20,9 @@ test('0.15: seletor nativo escolhe regiões válidas e nunca inventa cobertura',
   try {
     const source = path.join(root, 'android-template/app/src/main/java/com/radalert/app/RoadRegionSelector.java');
     const spec = path.join(root, 'tests/native/RoadRegionSelectorTest.java');
-    const compiled = spawnSync('javac', ['-encoding', 'UTF-8', '-d', temp, source, spec], { encoding: 'utf8' });
+    const compiled = spawnSync('javac', ['-encoding', 'UTF-8', '-d', temp, source, spec], { encoding: 'utf8', timeout: 15000 });
     assert.equal(compiled.status, 0, compiled.stderr || compiled.stdout);
-    const result = spawnSync('java', ['-cp', temp, 'com.radalert.app.RoadRegionSelectorTest'], { encoding: 'utf8' });
+    const result = spawnSync('java', ['-cp', temp, 'com.radalert.app.RoadRegionSelectorTest'], { encoding: 'utf8', timeout: 15000 });
     assert.equal(result.status, 0, result.stderr || result.stdout);
     assert.match(result.stdout, /8 testes Java/);
     const store = path.join(root, 'android-template/app/src/main/java/com/radalert/app/RoadRegionStore.java');
@@ -30,9 +30,9 @@ test('0.15: seletor nativo escolhe regiões válidas e nunca inventa cobertura',
     const atomic = path.join(root, 'tests/native/stubs/android/util/AtomicFile.java');
     const json = path.join(root, 'tests/native/stubs/org/json/JSONObject.java');
     const storeCompiled = spawnSync('javac', ['-encoding', 'UTF-8', '-cp', temp, '-d', temp,
-      store, storeSpec, atomic, json], { encoding: 'utf8' });
+      store, storeSpec, atomic, json], { encoding: 'utf8', timeout: 15000 });
     assert.equal(storeCompiled.status, 0, storeCompiled.stderr || storeCompiled.stdout);
-    const storeResult = spawnSync('java', ['-cp', temp, 'com.radalert.app.RoadRegionStoreTest'], { encoding: 'utf8' });
+    const storeResult = spawnSync('java', ['-cp', temp, 'com.radalert.app.RoadRegionStoreTest'], { encoding: 'utf8', timeout: 15000 });
     assert.equal(storeResult.status, 0, storeResult.stderr || storeResult.stdout);
     assert.match(storeResult.stdout, /10 testes Java/);
   } finally { rmSync(temp, { recursive: true, force: true }); }

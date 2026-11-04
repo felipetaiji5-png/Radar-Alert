@@ -21,6 +21,8 @@ import { MapView } from './ui/map-view.js';
 import { DriveModeController } from './ui/drive-mode.js';
 import { RoadStabilityTracker } from './geo/road-stability.js';
 import { buildNativeRadarCatalog, createNativeWriteQueue } from './geo/native-sync.js';
+import { DEFAULT_SETTINGS, normalizeSettings, persistSettings } from './geo/preferences.js';
+import { loadRadarDataset } from './geo/dataset-loader.js';
 
 const NativeRadarTracking = registerPlugin('RadarTracking');
 const IS_ANDROID_NATIVE = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
@@ -28,7 +30,7 @@ const IS_ANDROID_NATIVE = Capacitor.isNativePlatform() && Capacitor.getPlatform(
 const $ = id => document.getElementById(id);
 const DATASET_KEY = 'pardal-sp-csv-v1';
 const SETTINGS_KEY = 'radar-alert:settings';
-const settings = { voice: true, notifications: false, contrast: false, driveMode: true, volume: 100, far: 1000, mid: 500, near: 200 };
+const settings = { ...DEFAULT_SETTINGS };
 let radars = [], activeRadars = [], nearby = [], position = null;
 let spatialIndex = new SpatialIndex();
 const mapView = new MapView({ getElement: $, onLog: log, onNotice: setNotice });
@@ -57,6 +59,7 @@ let nativeBridgeReady = Promise.resolve();
 let nativeHeartbeatTimer = null;
 let firstFixLogged = false, firstGpsCallbackLogged = false;
 let datasetSavedAt = null, catalogBuiltAt = null;
+let datasetPersisted = false, datasetSource = '', datasetLoadPromise = null;
 let lastAnnouncementAt = 0;
 const alertTiers = new Map();
 const diagnostics = [];
@@ -133,33 +136,40 @@ async function fetchText(url, timeoutMs = 18000) {
 }
 
 async function loadCatalog() {
+  if (navigator.onLine === false) return null;
   try {
     const catalog = JSON.parse(await fetchText(CATALOG_URL, 9000));
     const sp = catalog?.ufs?.SP;
     if (sp?.built_at) {
       catalogBuiltAt = sp.built_at;
-      $('datasetMeta').textContent = `Pardal · base gerada em ${formatDate(catalogBuiltAt)}`;
+      renderDatasetMetadata();
       return sp;
     }
   } catch (error) { log(`Catálogo não disponível: ${error.message}`); }
-  $('datasetMeta').textContent = 'Pardal · data do catálogo não confirmada';
+  renderDatasetMetadata();
   return null;
 }
 
-function applyDataset(csv, savedAt, sourceLabel) {
+function renderDatasetMetadata() {
+  const date = catalogBuiltAt ? `base gerada em ${formatDate(catalogBuiltAt)}` : 'data do catálogo não confirmada';
+  const storage = datasetPersisted ? 'cópia local disponível' : 'sem cópia offline confirmada';
+  $('datasetMeta').textContent = `Pardal · ${date}${datasetSource ? ` · ${datasetSource} · ${storage}` : ''}`;
+}
+
+function applyDataset(csv, savedAt, sourceLabel, persisted = true) {
   const rows = parseCsv(csv);
   const normalized = normalizePardalRows(rows);
   if (normalized.length < 100) throw new Error(`A base retornou apenas ${normalized.length} coordenadas válidas; importação recusada.`);
   radars = normalized;
   datasetSavedAt = savedAt || null;
+  datasetPersisted = persisted;
+  datasetSource = sourceLabel;
   updateDatasetStats();
   $('datasetStatus').textContent = `${activeRadars.length.toLocaleString('pt-BR')} radares ativos`;
   $('networkDot').classList.toggle('online', navigator.onLine);
   $('networkDot').classList.toggle('offline', !navigator.onLine);
   $('staleDataBanner').classList.toggle('hidden', !OfflineStore.isDatasetStale(datasetSavedAt));
-  $('datasetMeta').textContent = catalogBuiltAt
-    ? `Pardal · base gerada em ${formatDate(catalogBuiltAt)} · ${sourceLabel}`
-    : `Pardal · ${sourceLabel} · cache ${datasetSavedAt ? formatDate(datasetSavedAt) : 'sem data'}`;
+  renderDatasetMetadata();
   setNotice(`Base carregada: ${activeRadars.length.toLocaleString('pt-BR')} ativos e ${radars.length - activeRadars.length} inativos/sem operação confirmada.`);
   $('diagDatabase').textContent = `${radars.length.toLocaleString('pt-BR')} registros (${activeRadars.length} ativos)`;
   $('diagDatasetAge').textContent = datasetSavedAt ? formatDate(datasetSavedAt) : 'Não informada';
@@ -167,36 +177,41 @@ function applyDataset(csv, savedAt, sourceLabel) {
   if (position && trackingActive) updateNearby();
 }
 
-async function loadDataset(force = false) {
+function loadDataset(force = false) {
+  if (datasetLoadPromise) return datasetLoadPromise;
+  datasetLoadPromise = performDatasetLoad(force).finally(() => { datasetLoadPromise = null; });
+  return datasetLoadPromise;
+}
+
+async function performDatasetLoad(force) {
   $('datasetStatus').textContent = 'Carregando base…';
   setNotice('Consultando a base de dados Pardal para São Paulo.');
-  if (!force) {
-    const cached = await OfflineStore.getDataset(DATASET_KEY);
-    if (cached?.data?.csv) {
-      try { applyDataset(cached.data.csv, cached.savedAt, 'cache local'); }
-      catch (error) { log(`Cache local inválido: ${error.message}`); }
-    }
-  }
-
-  let lastError = null;
-  for (const url of SP_DATA_URLS) {
-    try {
-      const csv = await fetchText(url);
-      const preview = normalizePardalRows(parseCsv(csv));
-      if (preview.length < 100) throw new Error('Quantidade insuficiente de coordenadas válidas.');
-      await OfflineStore.saveDataset(DATASET_KEY, { csv });
-      applyDataset(csv, new Date().toISOString(), 'download');
-      return;
-    } catch (error) { lastError = error; log(`Falha ao obter base: ${error.message}`); }
+  const result = await loadRadarDataset({
+    store: OfflineStore, key: DATASET_KEY, urls: SP_DATA_URLS, fetchText,
+    validate: csv => {
+      if (normalizePardalRows(parseCsv(csv)).length < 100) throw new Error('Quantidade insuficiente de coordenadas válidas.');
+    },
+    onData: data => {
+      // Uma atualização não substitui dados em memória por um cache mais velho.
+      if (force && radars.length && data.source === 'cache local') return;
+      applyDataset(data.csv, data.savedAt, data.source, data.persisted);
+      updateDiagnostics();
+    },
+    onError: error => log(`Falha ao obter ou salvar base: ${error.message}`)
+  });
+  if (result.updated) {
+    if (!result.data.persisted) setNotice('Base carregada para esta sessão, mas não foi possível salvá-la para uso offline.');
+    return;
   }
 
   if (radars.length) {
-    setNotice('Não foi possível atualizar. Usando a última cópia salva; confirme a idade dos dados antes de dirigir.');
+    $('datasetStatus').textContent = `${activeRadars.length.toLocaleString('pt-BR')} radares ativos`;
+    setNotice(result.offline ? 'Sem internet. Usando a base já carregada; confira a data no Diagnóstico.' : 'Não foi possível atualizar. Usando a base já carregada; confira a data no Diagnóstico.');
     return;
   }
   $('datasetStatus').textContent = 'Base indisponível';
   $('networkDot').classList.add('offline');
-  setNotice(`Não foi possível carregar os radares. ${lastError?.message || 'Verifique sua conexão e tente novamente.'}`);
+  setNotice(`Não foi possível carregar os radares. ${result.error?.message || 'Conecte-se à internet para baixar a base.'}`);
 }
 
 function deriveHeading(current, previous) {
@@ -214,8 +229,9 @@ async function ensureRoadNetwork(force = false, targetCenter = null) {
   if (!currentNetworkStillCovers) setNotice('Carregando ruas e rodovias próximas do OpenStreetMap. Alertas por via aguardam validação.');
   roadLoadPromise = roadLoader.loadAround(requestedCenter, { force })
     .then(result => {
+      if (result.warning) { log(result.warning); setNotice(result.warning); }
       roadLoadRetryAfter = 0;
-      if (result.provider.covers(requestedCenter, 0.95)) lastRoadLoadSucceededAt = Date.now();
+      if (result.persisted !== false && result.provider.covers(requestedCenter, 0.95)) lastRoadLoadSucceededAt = Date.now();
       // O veículo pode ter saído da região durante um download lento.
       // Não substitua uma malha ainda válida por outra que já não o cobre.
       if (!result.provider.covers(position) && roadProvider?.covers(position)) {
@@ -684,7 +700,7 @@ function updateDiagnostics() {
   const health = deriveSystemHealth({
     tracking: trackingActive, native: IS_ANDROID_NATIVE, nativeServiceActive,
     hasPosition: Boolean(position), fixAgeMs: position ? Date.now() - position.timestamp : null,
-    gpsIssue: lastFixIssue, activeRadars: activeRadars.length, datasetSavedAt,
+    gpsIssue: lastFixIssue, activeRadars: activeRadars.length, datasetSavedAt, datasetPersisted,
     roadCovered: Boolean(position && roadProvider?.covers(position)),
     roadSegments: roadProvider?.getAllSegments().length || 0,
     routeReady: summary.routeAlertsReady, online: navigator.onLine
@@ -698,7 +714,7 @@ function updateDiagnostics() {
 function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-    Object.assign(settings, saved);
+    Object.assign(settings, normalizeSettings(saved));
   } catch { /* configurações padrão */ }
   $('prefVoiceToggle').checked = Boolean(settings.voice);
   $('prefNotificationsToggle').checked = Boolean(settings.notifications);
@@ -723,8 +739,11 @@ async function saveSettings() {
   settings.far = Number($('prefTierFar').value);
   settings.mid = Number($('prefTierMid').value);
   settings.near = Number($('prefTierNear').value);
+  // O acesso à propriedade localStorage também pode lançar SecurityError.
+  const storage = { setItem: (key, value) => localStorage.setItem(key, value) };
+  const saved = persistSettings(storage, SETTINGS_KEY, settings);
+  Object.assign(settings, saved.settings);
   alertManager.setTiers({ far: settings.far, mid: settings.mid, near: settings.near });
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   if (nativeServiceActive) {
     if (settings.notifications) {
       try {
@@ -732,9 +751,10 @@ async function saveSettings() {
         if (!permission.notificationsGranted) log('Notificações não autorizadas pelo Android; alertas por voz continuam disponíveis.');
       } catch (error) { log(`Não foi possível solicitar notificações: ${error.message}`); }
     }
-    void NativeRadarTracking.setPreferences({ far: settings.far, mid: settings.mid, near: settings.near, voice: settings.voice, notifications: settings.notifications, volume: settings.volume }).catch(error => log(`Falha ao atualizar preferências nativas: ${error.message}`));
+    void nativeWrites.enqueue(() => NativeRadarTracking.setPreferences({ far: settings.far, mid: settings.mid, near: settings.near, voice: settings.voice, notifications: settings.notifications, volume: settings.volume })).catch(error => log(`Falha ao atualizar preferências nativas: ${error.message}`));
   }
-  closeModal('settingsModal'); setNotice('Preferências salvas neste dispositivo.');
+  closeModal('settingsModal');
+  setNotice(saved.persisted ? 'Preferências salvas neste dispositivo.' : 'Preferências aplicadas nesta sessão. O armazenamento local está indisponível; elas não serão mantidas ao reabrir.');
 }
 function openModal(id) { $(id).classList.remove('hidden'); }
 function closeModal(id) { $(id).classList.add('hidden'); }
@@ -777,7 +797,7 @@ $('prepareMapRegionBtn').addEventListener('click', async () => {
   button.textContent = 'Preparando área…';
   try {
     if (roadProvider?.covers(center)) {
-      setNotice('Esta área já está coberta pela malha ativa e foi sincronizada com o Android.');
+      setNotice('Esta área já está carregada nesta sessão. Consulte o Diagnóstico para verificar as regiões sincronizadas com o Android.');
     } else {
       const previousSuccess = lastRoadLoadSucceededAt;
       await ensureRoadNetwork(false, center);
@@ -818,7 +838,8 @@ $('clearDataBtn').addEventListener('click', async () => {
     try { await NativeRadarTracking.clearLocalData(); }
     catch (error) { nativeDataCleared = false; log(`Falha ao apagar a cópia nativa da base: ${error.message}`); }
   }
-  localStorage.removeItem(SETTINGS_KEY);
+  try { localStorage.removeItem(SETTINGS_KEY); } catch (error) { log(`Preferências locais não removidas: ${error.message}`); }
+  datasetPersisted = false; datasetSource = '';
   radars = []; activeRadars = []; nearby = []; spatialIndex.clear(); datasetSavedAt = null; alertTiers.clear(); roadProvider = null; mapMatcher = null; mapMatch = null; roadNetworkStatus = 'Cache apagado';
   lastMatchDiagnosticSignature = null; lastFixIssue = null; roadStability.reset(); mapView.resetTrail(); resetDriveMode(); renderMatchInsight();
   updateDatasetStats(); $('datasetStatus').textContent = 'Cache apagado'; $('datasetMeta').textContent = 'Pardal · ainda não carregado'; catalogBuiltAt = null;
@@ -891,6 +912,6 @@ loadSettings();
 updateDiagnostics();
 if (IS_ANDROID_NATIVE) nativeBridgeReady = setupNativeBridge().catch(error => { log(`Plugin Android indisponível: ${error.message}`); throw error; });
 if (!IS_ANDROID_NATIVE && 'serviceWorker' in navigator && window.isSecureContext) navigator.serviceWorker.register('/sw.js').catch(error => log(`Service Worker indisponível: ${error.message}`));
-await loadCatalog();
+void loadCatalog();
 await loadDataset(false);
 updateDiagnostics();

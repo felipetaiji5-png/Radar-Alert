@@ -1,3 +1,7 @@
+## 0.15.2
+
+Inicialização da base sem bloqueio pelo catálogo, recuperação de respostas Overpass incompletas, preferências validadas e mensagens corretas de persistência. Restaurado stub Java ausente e adicionado lockfile. 153 testes e build web aprovados. APK e testes em aparelho pendentes.
+
 # Changelog
 
 ## 0.15.1 — Hotfix de migração e continuidade do GPS nativo

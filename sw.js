@@ -1,9 +1,9 @@
-const CACHE = 'radar-alert-shell-v0151';
+const CACHE = 'radar-alert-shell-v0152';
 const SHELL = [
   '/', '/index.html', '/styles.css', '/app.js', '/core.js', '/manifest.webmanifest', '/icon.svg',
   '/geo/geo-math.js', '/geo/radar-consolidator.js', '/geo/spatial-index.js',
   '/geo/adaptive-gps.js', '/geo/offline-store.js', '/geo/alert-manager.js',
-  '/geo/native-sync.js', '/geo/road-network.js', '/geo/map-matcher.js', '/geo/motion-heading.js', '/geo/road-stability.js', '/geo/match-diagnostics.js', '/geo/osm-loader.js', '/geo/road-prefetch.js',
+  '/geo/preferences.js', '/geo/dataset-loader.js', '/geo/native-sync.js', '/geo/road-network.js', '/geo/map-matcher.js', '/geo/motion-heading.js', '/geo/road-stability.js', '/geo/match-diagnostics.js', '/geo/osm-loader.js', '/geo/road-prefetch.js',
   '/refined.css', '/ui/navigation.js', '/ui/nearby-list.js', '/ui/match-panel.js', '/ui/system-health.js', '/ui/map-view.js', '/ui/simulator-panel.js', '/ui/drive-mode.js', '/sim/route-simulator.js'
 ];
 self.addEventListener('install', event => {

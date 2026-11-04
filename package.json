@@ -1,6 +1,6 @@
 {
   "name": "radar-alert",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "private": true,
   "type": "module",
   "description": "Radar Alert — PWA e aplicativo Android com serviço de localização em primeiro plano",
@@ -9,11 +9,12 @@
     "start": "vite --host 0.0.0.0",
     "build": "vite build && node scripts/postbuild.mjs",
     "test": "node --test tests/*.test.js",
-    "check": "node --check app.js && node --check core.js && node --check server.mjs && node --check vite.config.js && node --check scripts/postbuild.mjs && node --check scripts/patch-android.mjs && node --check geo/osm-loader.js && node --check geo/road-network.js && node --check geo/map-matcher.js && node --check geo/alert-manager.js && node --check geo/offline-store.js && node --check geo/adaptive-gps.js && node --check geo/geo-math.js && node --check geo/radar-consolidator.js && node --check geo/spatial-index.js && node --check geo/road-prefetch.js && node --check geo/match-diagnostics.js && node --check geo/motion-heading.js && node --check geo/road-stability.js && node --check geo/native-sync.js && node --check ui/navigation.js && node --check ui/nearby-list.js && node --check ui/match-panel.js && node --check ui/system-health.js && node --check ui/map-view.js && node --check ui/simulator-panel.js && node --check ui/drive-mode.js && node --check sim/route-simulator.js && node --check scripts/verify-android.mjs",
+    "check": "node --check app.js && node --check core.js && node --check server.mjs && node --check vite.config.js && node --check scripts/postbuild.mjs && node --check scripts/patch-android.mjs && node --check geo/osm-loader.js && node --check geo/road-network.js && node --check geo/map-matcher.js && node --check geo/alert-manager.js && node --check geo/offline-store.js && node --check geo/adaptive-gps.js && node --check geo/geo-math.js && node --check geo/radar-consolidator.js && node --check geo/spatial-index.js && node --check geo/road-prefetch.js && node --check geo/match-diagnostics.js && node --check geo/motion-heading.js && node --check geo/road-stability.js && node --check geo/native-sync.js && node --check ui/navigation.js && node --check ui/nearby-list.js && node --check ui/match-panel.js && node --check ui/system-health.js && node --check ui/map-view.js && node --check ui/simulator-panel.js && node --check ui/drive-mode.js && node --check sim/route-simulator.js && node --check scripts/verify-android.mjs && node --check geo/preferences.js && node --check geo/dataset-loader.js && node --check sw.js",
     "android:add": "npm run build && cap add android && node scripts/patch-android.mjs",
     "android:sync": "npm run build && cap sync android && node scripts/patch-android.mjs",
     "android:open": "cap open android",
-    "android:verify": "node scripts/verify-android.mjs"
+    "android:verify": "node scripts/verify-android.mjs",
+    "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",

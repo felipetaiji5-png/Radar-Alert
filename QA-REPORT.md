@@ -1,3 +1,47 @@
+# Radar Alert 0.15.2 — confiabilidade offline e recuperação
+
+## Melhorias
+
+- A base de radares em cache é aplicada antes dos downloads. A consulta ao catálogo ocorre em paralelo e deixa de bloquear a inicialização da base por até 9 segundos. Sem internet informada pelo navegador, a abertura não tenta baixar catálogo ou CSV.
+- Downloads inválidos não sobrescrevem a base local. A atualização manual preserva a base já carregada quando a rede falha. Chamadas simultâneas de carregamento compartilham a mesma operação.
+- Respostas Overpass vazias, sem segmentos utilizáveis ou com aviso de execução incompleta passam para o servidor alternativo. Se todos falham, uma malha válida em cache continua disponível. O controle de intervalo entre consultas permanece ativo.
+- Falhas de gravação não descartam dados válidos em memória. Base e malha informam quando não foi possível confirmar o armazenamento offline; o painel deixa de confundir data de download com garantia de cópia local.
+- Preferências carregadas são validadas: tipos booleanos, volume entre 0 e 100 e distâncias disponíveis na interface. Um armazenamento local bloqueado não interrompe a aplicação das preferências na sessão. Atualizações nativas de preferências usam a fila de sincronização existente.
+- Restaurado o stub AtomicFile ausente no ZIP original. A regra de exclusão de android/ agora se aplica apenas à raiz, preservando o stub de testes. Chamadas Java dos testes têm timeout para evitar espera indefinida.
+- Incluídos package-lock.json e build web em www/.
+
+## Verificação realizada em 04/11/2026
+
+- npm test: **153 testes aprovados, zero falhas e zero ignorados**. São 16 testes novos, além dos 137 existentes.
+- Testes Java isolados executados com JDK 21.0.8. AtomicFile e JSONObject são substitutos de teste; não comprovam comportamento do sistema Android.
+- npm run check: aprovado.
+- npm run build: aprovado com Node 24.11.1, npm 11.6.2 e Vite 7.1.12.
+- Prévia no navegador integrado: não realizada; a conexão ao servidor local expirou.
+- APK/Gradle, GPS real, voz e segundo plano em aparelho: não executados. O serviço Java de produção não foi alterado nesta versão.
+
+## Atualizar o projeto existente
+
+Faça uma cópia de segurança e copie o conteúdo da pasta RadarAlert-0.15.2 para a pasta que contém package.json e seu android/ existente. Preserve a pasta android/. Execute nessa pasta:
+
+~~~powershell
+npm ci
+npm test
+npm run check
+npm run android:sync
+npm run android:verify
+npm run android:open
+~~~
+
+No Android Studio, compile e instale o APK atualizado. Para um projeto que ainda não tem android/, use npm run android:add no lugar de android:sync. Testes Java exigem java e javac do JDK 21 no PATH; se o launcher Java do Windows não responder, ajuste JAVA_HOME/PATH para seu JDK.
+
+Para testar só a versão web: npm ci e npm run dev. Para abrir o build pronto, execute npm run preview e use o endereço mostrado no terminal.
+
+## Limites
+
+O pacote não contém APK. Não há download de todas as ruas de São Paulo nem garantia de cobertura offline fora das regiões salvas. A alteração não flexibiliza os critérios de via, pista e sentido para os alertas. Os testes de rede usam respostas controladas e não comprovam disponibilidade dos servidores públicos.
+
+---
+
 # Radar Alert 0.15.1 — Relatório de correção
 
 **Problema reproduzido por análise de código:** o antigo `loadRoadNetwork()` propagava `IllegalStateException` quando o arquivo OSM persistido não continha a revisão atual do catálogo. `onStartCommand()` capturava a exceção fora do carregamento de GPS e chamava `stopTracking()`, interrompendo todo o monitoramento. Isso explica os eventos `error` e `stopped` dos logs de 05:46:50. A origem precisa do snapshot (arquivo legado ou uma atualização concorrente) não pode ser estabelecida apenas pelo log.

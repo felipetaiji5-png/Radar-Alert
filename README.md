@@ -1,3 +1,30 @@
+## 🆕 Atualização 0.15.2
+
+Melhorias de confiabilidade, funcionamento offline e recuperação de falhas.
+
+### Melhorias
+- A base local de radares carrega sem esperar pela consulta ao catálogo.
+- Quando o navegador informa ausência de internet, o aplicativo utiliza os dados disponíveis em cache.
+- Respostas OSM vazias ou incompletas acionam a tentativa em outro servidor.
+- Falhas de atualização preservam os dados válidos já carregados.
+- O aplicativo informa quando os dados estão disponíveis apenas na sessão e não puderam ser salvos para uso offline.
+- Preferências salvas são validadas, incluindo volume e distâncias dos avisos.
+- Falhas no armazenamento das preferências não impedem sua aplicação na sessão.
+
+### Manutenção
+- Restaurado o arquivo de apoio ausente nos testes Java.
+- Adicionado `package-lock.json` para instalações reproduzíveis.
+- Incluído o build web na pasta `www/`.
+
+### Validação
+- **153 testes aprovados**, incluindo 16 novos testes de regressão.
+- Verificação de sintaxe e build web concluídos.
+- Compilação do APK e testes em aparelho Android ainda pendentes.
+
+> Os critérios de confirmação de via e sentido para emitir alertas foram preservados. A cobertura offline continua limitada às regiões previamente salvas.
+
+---
+
 # Radar Alert 0.15.1 — Correção do início do GPS nativo
 
 Esta versão corrige uma falha introduzida na 0.15.0: uma malha OSM salva por uma revisão anterior (inclusive versões que não tinham `catalogRevision`) podia gerar o erro **“Malha OSM associada à revisão antiga do catálogo de radares”** e **derrubar todo o serviço Android antes do primeiro fix GPS**. Agora a incompatibilidade suspende **somente os alertas por rota**. O serviço GPS continua ativo e pode receber uma malha sincronizada mais recente.

@@ -56,17 +56,17 @@ test('cancelamento OSM interrompe a requisição e permite reinício imediato se
   assert.deepEqual([fetches, saves, loader.retryAfter, loader.lastRequestAt], [1, 0, 0, 0]);
 });
 
-test('Android executa a mesma política de idade GPS em Java', t => {
+for (const policy of ['LiveFixPolicy', 'GpsRecoveryPolicy']) test(`Android executa ${policy} em Java`, t => {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const found = spawnSync('javac', ['-version'], { encoding: 'utf8', timeout: 15000 });
   if (found.error || found.status !== 0) { t.skip('JDK indisponível'); return; }
   const temp = mkdtempSync(path.join(tmpdir(), 'radar-live-fix-'));
   try {
     const compile = spawnSync('javac', ['-encoding', 'UTF-8', '-d', temp,
-      path.join(root, 'android-template/app/src/main/java/com/radalert/app/LiveFixPolicy.java'),
-      path.join(root, 'tests/native/LiveFixPolicyTest.java')], { encoding: 'utf8', timeout: 15000 });
+      path.join(root, `android-template/app/src/main/java/com/radalert/app/${policy}.java`),
+      path.join(root, `tests/native/${policy}Test.java`)], { encoding: 'utf8', timeout: 15000 });
     assert.equal(compile.status, 0, compile.stderr || compile.stdout);
-    const run = spawnSync('java', ['-cp', temp, 'com.radalert.app.LiveFixPolicyTest'], { encoding: 'utf8', timeout: 15000 });
+    const run = spawnSync('java', ['-cp', temp, `com.radalert.app.${policy}Test`], { encoding: 'utf8', timeout: 15000 });
     assert.equal(run.status, 0, run.stderr || run.stdout);
   } finally { rmSync(temp, { recursive: true, force: true }); }
 });

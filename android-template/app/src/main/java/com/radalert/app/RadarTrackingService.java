@@ -21,6 +21,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
 import android.util.AtomicFile;
 
@@ -65,10 +66,13 @@ public class RadarTrackingService extends Service implements LocationListener {
     private HandlerThread locationThread;
     private Handler mainHandler;
     private Runnable providerMonitor;
-    private boolean serviceRunning = false;
+    private volatile boolean serviceRunning = false;
     private TextToSpeech textToSpeech;
     private boolean ttsReady = false;
-    private boolean locationRegistered = false;
+    private volatile boolean locationRegistered = false;
+    private volatile long lastValidElapsedMillis = 0;
+    private volatile long lastRequestElapsedMillis = 0;
+    private boolean clockDifferenceReported = false;
     private Location previousLocation;
     private double effectiveHeading = Double.NaN;
     private double currentSpeedKmh = Double.NaN;
@@ -105,8 +109,12 @@ public class RadarTrackingService extends Service implements LocationListener {
             @Override public void run() {
                 if (!serviceRunning) return;
                 boolean enabled = isGpsEnabled();
-                if (enabled && !locationRegistered) {
-                    try { startLocationUpdates(); }
+                if (GpsRecoveryPolicy.shouldRetry(serviceRunning, enabled, locationRegistered,
+                        SystemClock.elapsedRealtime(), lastValidElapsedMillis, lastRequestElapsedMillis)) {
+                    try {
+                        emitServiceEvent("Sem novas posições válidas. Renovando a solicitação GPS automaticamente.", "gpsRecovering", true);
+                        startLocationUpdates();
+                    }
                     catch (SecurityException error) {
                         emitServiceEvent("Permissão GPS perdida: " + error.getMessage(), "error", false);
                         stopTracking();
@@ -158,7 +166,7 @@ public class RadarTrackingService extends Service implements LocationListener {
             } catch (Exception error) {
                 emitServiceEvent("Falha ao atualizar a malha viária nativa; última malha válida preservada: " + error.getMessage(), "error", true);
             }
-            return START_NOT_STICKY;
+            return START_STICKY;
         }
 
         try {
@@ -437,7 +445,8 @@ public class RadarTrackingService extends Service implements LocationListener {
         catch (Exception ignored) { return false; }
     }
 
-    private void startLocationUpdates() {
+    private synchronized void startLocationUpdates() {
+        if (!serviceRunning) return;
         if (locationManager == null) throw new IllegalStateException("LocationManager indisponível.");
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             throw new SecurityException("Permissão precisa de localização não concedida.");
@@ -452,22 +461,27 @@ public class RadarTrackingService extends Service implements LocationListener {
         // O intervalo reduz a frequência quando parado. Exigir deslocamento aqui
         // impediria novos fixes no mesmo ponto e faria o painel expirar em 90 s.
         float minDistance = 0.0f;
+        lastRequestElapsedMillis = SystemClock.elapsedRealtime();
         try {
             if (locationRegistered) locationManager.removeUpdates(this);
+            locationRegistered = false;
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval, minDistance, this, locationThread.getLooper());
             locationRegistered = true;
             prefs.edit().putBoolean("gpsEnabled", true).putString("mode", gpsMode).apply();
         } catch (SecurityException error) {
             throw error;
         } catch (Exception error) {
-            emitServiceEvent("Não foi possível solicitar GPS: " + error.getMessage(), "error", false);
+            emitServiceEvent("Não foi possível solicitar GPS; nova tentativa automática: " + error.getMessage(), "error", true);
         }
     }
 
     @Override
-    public void onLocationChanged(Location location) {
-        if (location != null && !LiveFixPolicy.isFresh(location.getTime(), System.currentTimeMillis())) {
-            emitServiceEvent("Leitura GPS antiga ou com horário inválido. Aguardando posição atual.", "gpsStale", true);
+    public synchronized void onLocationChanged(Location location) {
+        if (!serviceRunning) return;
+        long elapsedNow = SystemClock.elapsedRealtimeNanos();
+        if (location != null && !LiveFixPolicy.isFresh(location.getElapsedRealtimeNanos(), elapsedNow)) {
+            long age = LiveFixPolicy.ageMillis(location.getElapsedRealtimeNanos(), elapsedNow);
+            emitServiceEvent("Leitura GPS recusada: idade monotônica " + age + " ms (-1 = inválida). Aguardando posição atual.", "gpsStale", true);
             return;
         }
         if (location == null || !location.hasAccuracy() || location.getAccuracy() <= 0 || location.getAccuracy() > 65.0f) {
@@ -480,7 +494,7 @@ public class RadarTrackingService extends Service implements LocationListener {
         // após oscilações de GPS, o rumo deve ficar desconhecido.
         effectiveHeading = Double.NaN;
         if (previousLocation != null) {
-            long elapsedMs = location.getTime() - previousLocation.getTime();
+            long elapsedMs = (location.getElapsedRealtimeNanos() - previousLocation.getElapsedRealtimeNanos()) / 1000000L;
             if (elapsedMs <= 0) return;
             double distance = previousLocation.distanceTo(location);
             double tolerated = Math.max(75.0, location.getAccuracy() + previousLocation.getAccuracy() + 25.0);
@@ -507,12 +521,20 @@ public class RadarTrackingService extends Service implements LocationListener {
         }
 
         previousLocation = new Location(location);
+        lastValidElapsedMillis = location.getElapsedRealtimeNanos() / 1000000L;
+        long timestamp = LiveFixPolicy.webTimestamp(location.getElapsedRealtimeNanos(), elapsedNow, System.currentTimeMillis());
+        long clockDifference = location.getTime() - timestamp;
+        if (!clockDifferenceReported && Math.abs(clockDifference) > 2000L) {
+            clockDifferenceReported = true;
+            emitServiceEvent("Relógio GPS difere do celular em " + clockDifference
+                + " ms. Idade validada pelo relógio monotônico do Android.", "gpsClockAdjusted", true);
+        }
         currentSpeedKmh = speedKmh;
         updateGpsMode(speedKmh);
         prefs.edit()
             .putFloat("lastAccuracy", location.getAccuracy())
             .putFloat("lastSpeedKmh", Double.isNaN(speedKmh) ? -1.0f : (float) speedKmh)
-            .putLong("lastFixAt", System.currentTimeMillis())
+            .putLong("lastFixAt", timestamp)
             .putString("mode", gpsMode)
             .putBoolean("gpsEnabled", true)
             .apply();
@@ -552,7 +574,7 @@ public class RadarTrackingService extends Service implements LocationListener {
         event.putExtra("accuracy", location.getAccuracy());
         if (!Double.isNaN(speedKmh)) event.putExtra("speedMps", (float) (speedKmh / 3.6));
         if (!Double.isNaN(heading)) event.putExtra("bearingDegrees", (float) heading);
-        event.putExtra("timestampMs", location.getTime());
+        event.putExtra("fixElapsedNanos", location.getElapsedRealtimeNanos());
         sendBroadcast(event);
     }
 
@@ -787,7 +809,7 @@ public class RadarTrackingService extends Service implements LocationListener {
         sendBroadcast(event);
     }
 
-    private void stopTracking() {
+    private synchronized void stopTracking() {
         serviceRunning = false;
         serviceActive = false;
         if (mainHandler != null && providerMonitor != null) mainHandler.removeCallbacks(providerMonitor);
@@ -804,7 +826,8 @@ public class RadarTrackingService extends Service implements LocationListener {
     }
 
     @Override
-    public void onProviderDisabled(String provider) {
+    public synchronized void onProviderDisabled(String provider) {
+        if (!serviceRunning) return;
         if (LocationManager.GPS_PROVIDER.equals(provider)) {
             prefs.edit().putBoolean("gpsEnabled", false).apply();
             emitServiceEvent("GPS desativado no aparelho. O serviço permanece ativo aguardando reativação.", "gpsDisabled", true);
@@ -813,7 +836,8 @@ public class RadarTrackingService extends Service implements LocationListener {
     }
 
     @Override
-    public void onProviderEnabled(String provider) {
+    public synchronized void onProviderEnabled(String provider) {
+        if (!serviceRunning) return;
         if (LocationManager.GPS_PROVIDER.equals(provider)) {
             emitServiceEvent("GPS reativado. Retomando atualizações.", "gpsEnabled", true);
             try { startLocationUpdates(); }
@@ -824,7 +848,7 @@ public class RadarTrackingService extends Service implements LocationListener {
     @Override public void onStatusChanged(String provider, int status, Bundle extras) { }
 
     @Override
-    public void onDestroy() {
+    public synchronized void onDestroy() {
         serviceRunning = false;
         serviceActive = false;
         if (prefs != null) prefs.edit().putBoolean("running", false).putBoolean("gpsEnabled", false).putString("mode", "STOPPED").apply();

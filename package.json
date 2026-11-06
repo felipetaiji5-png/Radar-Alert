@@ -1,6 +1,6 @@
 {
   "name": "radar-alert",
-  "version": "0.17.1",
+  "version": "0.17.2",
   "private": true,
   "type": "module",
   "description": "Radar Alert — PWA e aplicativo Android com serviço de localização em primeiro plano",

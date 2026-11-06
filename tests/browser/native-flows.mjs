@@ -62,6 +62,19 @@ export async function testNativeFlows(browser, origin, csv, pass) {
       assert.equal(await page.locator('#speedLimit').textContent(), '50');
     }
     pass('Ponte Android: rejeição, GPS desligado e recuperação atualizam painel e ilustração');
+    const stopsBeforeHide = await page.evaluate(() => window.__native.calls.filter(call => call === 'stop').length);
+    await page.evaluate(() => {
+      window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }));
+      window.__native.listeners.serviceEvent({ mode: 'gpsRecovering', running: true,
+        message: 'Renovando solicitação GPS' });
+    });
+    assert.equal(await page.evaluate(() => window.__native.running), true);
+    assert.equal(await page.evaluate(() => window.__native.calls.filter(call => call === 'stop').length), stopsBeforeHide);
+    await page.waitForTimeout(20);
+    await page.evaluate(() => window.__nativeFix());
+    assert.equal(await page.locator('#speedLimit').textContent(), '50');
+    assert.equal(await page.locator('#stopBtn').isVisible(), true);
+    pass('Ponte Android: suspensão da página e recuperação GPS preservam monitoramento ativo');
     await page.evaluate(() => { window.__native.failStop = true; });
     await page.locator('#stopBtn').click();
     await page.waitForFunction(() => document.getElementById('gpsError').textContent.includes('não confirmou'));

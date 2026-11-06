@@ -1,4 +1,4 @@
-# Radar Alert 0.17.1 — Horizonte
+# Radar Alert 0.17.2 — Horizonte
 
 Aplicativo Android e PWA para consultar radares de São Paulo, com distância, limite cadastrado, mapa e alertas quando a via e o sentido estão confirmados.
 
@@ -7,6 +7,14 @@ Aplicativo Android e PWA para consultar radares de São Paulo, com distância, l
 *Prévia com dados e GPS simulados.*
 
 ## Update log — 06/11/2026
+
+### 0.17.2 — Validação e continuidade do GPS
+
+- Idade e ordem das leituras nativas medidas pelo relógio monotônico Android, evitando rejeição por diferença entre o horário GPS e o celular.
+- Preserva a idade real de eventos atrasados enviados ao painel.
+- Renova a solicitação após 45 s sem fix válido, sem exigir reinício manual da sessão.
+- Mantém START_STICKY após atualizar a base e respeita parada manual.
+- Acrescenta diagnóstico de idade/diferença entre relógios, testes de recuperação e suspensão. GPS físico/tela bloqueada ainda pendentes.
 
 ### 0.17.1 — GPS parado
 
@@ -47,7 +55,7 @@ A ilustração usa escala de 0 a 1 km. Acima disso o marcador fica na borda e a 
 
 ## Instalar no Android
 
-Se você recebeu `RadarAlert-0.17.1-debug.apk`, abra o arquivo no Android para instalar a versão de teste: pacote `com.radalert.app`, versão 0.17.1, código 17001. A atualização sobre uma instalação anterior exige assinatura compatível. Se houver conflito, compile com a chave usada no seu projeto; desinstalar apaga dados locais e não é necessário para atualizar o código-fonte. O APK não está incluído nos arquivos deste repositório.
+Se você recebeu `RadarAlert-0.17.2-debug.apk`, abra o arquivo no Android para instalar a versão de teste: pacote `com.radalert.app`, versão 0.17.2, código 17002. A atualização sobre uma instalação anterior exige assinatura compatível. Se houver conflito, compile com a chave usada no seu projeto; desinstalar apaga dados locais e não é necessário para atualizar o código-fonte. O APK não está incluído nos arquivos deste repositório.
 
 Inicie o monitoramento com o app aberto e permita localização precisa. O serviço Android usa uma notificação persistente. O funcionamento no celular com tela bloqueada ainda precisa de validação física nesta versão.
 
@@ -107,7 +115,7 @@ Para executar a versão web, use `npm run dev`; o GPS exige HTTPS ou localhost. 
 
 ## Testes
 
-Foram aprovados **199 testes Node (incluindo testes Java executáveis)**, **24 grupos de navegador**, verificação de **28 combinações de tela/largura**, build web, sincronização Android e compilação do APK. Os testes de navegador usam GPS, dados e respostas Android fictícios. Consulte [QA-REPORT.md](QA-REPORT.md) para o escopo e reprodução.
+Foram aprovados **200 testes Node (incluindo testes Java executáveis)**, **25 grupos de navegador**, verificação de **28 combinações de tela/largura**, build web, sincronização Android e compilação do APK. Os testes de navegador usam GPS, dados e respostas Android fictícios. Consulte [QA-REPORT.md](QA-REPORT.md) para o escopo e reprodução.
 
 GPS físico, voz real, percurso e execução com tela bloqueada permanecem pendentes. O aplicativo não substitui a sinalização; a cobertura e a atualização das bases influenciam os resultados.
 

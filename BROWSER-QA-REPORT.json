@@ -22,6 +22,7 @@
     "Resposta OSM atrasada após GPS recusado não dispara alerta nem restaura limite antigo",
     "Via OSM confirmada: 111 m, limite 50 e um alerta sem repetição nos fixes seguintes",
     "Ponte Android: rejeição, GPS desligado e recuperação atualizam painel e ilustração",
+    "Ponte Android: suspensão da página e recuperação GPS preservam monitoramento ativo",
     "Ponte Android: falha ao parar é informada e permite nova tentativa",
     "Ponte Android: limpeza durante início atrasado encerra serviço antes de apagar dados"
   ],

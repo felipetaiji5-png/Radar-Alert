@@ -12,7 +12,7 @@ const drawableDir = path.join(android, 'app', 'src', 'main', 'res', 'drawable');
 await mkdir(javaDir, { recursive: true });
 await mkdir(drawableDir, { recursive: true });
 const nativeDir = path.join(root, 'android-template', 'app', 'src', 'main');
-for (const file of ['MainActivity.java', 'RadarTrackingPlugin.java', 'RadarTrackingService.java', 'RoadRegionSelector.java', 'RoadRegionStore.java', 'RoadSnapshotRevision.java', 'LiveFixPolicy.java']) {
+for (const file of ['MainActivity.java', 'RadarTrackingPlugin.java', 'RadarTrackingService.java', 'RoadRegionSelector.java', 'RoadRegionStore.java', 'RoadSnapshotRevision.java', 'LiveFixPolicy.java', 'GpsRecoveryPolicy.java']) {
   await copyFile(path.join(nativeDir, 'java', 'com', 'radalert', 'app', file), path.join(javaDir, file));
 }
 await copyFile(path.join(nativeDir, 'res', 'drawable', 'ic_stat_radar.xml'), path.join(drawableDir, 'ic_stat_radar.xml'));

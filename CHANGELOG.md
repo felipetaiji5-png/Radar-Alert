@@ -1,3 +1,12 @@
+## 0.17.2 — Validação e continuidade do GPS
+
+- Corrige a rejeição de leituras atuais como gpsStale quando o relógio do GPS difere do relógio do celular. Idade e ordem das posições Android usam elapsedRealtimeNanos, inclusive durante suspensão.
+- A ponte Android converte a idade para o painel no recebimento; broadcasts atrasados continuam antigos e não viram posições novas.
+- Renova automaticamente a solicitação GPS após 45 s sem posição válida, com intervalo entre tentativas. Falhas temporárias de registro não anunciam mais que o serviço parou.
+- Preserva START_STICKY ao atualizar a base/malha, permitindo ao Android recriar o serviço quando aplicável. A parada manual continua respeitada.
+- Diagnóstico registra idade monotônica de fixes recusados e diferença relevante entre relógios, sem coordenadas.
+- 200 testes Node (incluindo 26 verificações Java de idade/recuperação), 25 grupos de navegador e build APK aprovados. Execução com GPS físico e tela bloqueada permanece pendente.
+
 ## 0.17.1 — GPS com o veículo parado
 
 - Remove o deslocamento mínimo de 5 m exigido pelo serviço Android no perfil STOPPED, mantendo o intervalo solicitado de 6 segundos.

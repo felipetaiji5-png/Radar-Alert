@@ -1,4 +1,4 @@
-# Verificação — Radar Alert 0.17.1
+# Verificação — Radar Alert 0.17.2
 
 Data: 06/11/2026. Ambiente: Windows, Node 24.11.1, Java 21, Edge via Playwright e Android SDK 36.
 
@@ -6,13 +6,13 @@ Data: 06/11/2026. Ambiente: Windows, Node 24.11.1, Java 21, Edge via Playwright 
 
 | Verificação | Resultado |
 | --- | --- |
-| Testes Node | 199 aprovados, zero falhas e zero ignorados |
+| Testes Node | 200 aprovados, zero falhas e zero ignorados |
 | Java | Políticas de regiões, revisão, armazenamento e idade GPS compiladas/executadas na suíte Node |
-| Navegador | 24 grupos aprovados; relatório em BROWSER-QA-REPORT.json |
+| Navegador | 25 grupos aprovados; relatório em BROWSER-QA-REPORT.json |
 | Layout | 4 telas em 7 larguras (320–1440 px), sem overflow horizontal |
 | Sintaxe | npm run check aprovado |
 | Web/Android | Build web, sincronização e verificação de templates aprovados |
-| APK | :app:assembleDebug concluído; pacote com.radalert.app, versão 0.17.1, código 17001 |
+| APK | :app:assembleDebug concluído; pacote com.radalert.app, versão 0.17.2, código 17002 |
 
 ## Verificação visual
 
@@ -20,6 +20,12 @@ Data: 06/11/2026. Ambiente: Windows, Node 24.11.1, Java 21, Edge via Playwright 
 - Botões iniciar e parar acima da navegação em 390 × 844.
 - Lista com placas de limite, painel, mapa e diagnóstico verificados em 28 combinações com dados fictícios carregados.
 - Movimento reduzido, teclado e restauração de preferências continuam verificados.
+
+## Correção de relógio e continuidade
+
+A validação Android usa o relógio monotônico desde a inicialização, conforme a [documentação Location](https://developer.android.com/reference/android/location/Location#getElapsedRealtimeNanos()). O timestamp civil do GPS não decide validade nem ordem. A ponte preserva a idade real na entrega à WebView. Os testes Java cobrem relógio civil adiantado/atrasado, broadcast atrasado, leitura expirada/inválida e recuperação limitada após silêncio, respeitando parada e GPS desativado. O serviço preserva START_STICKY depois de recarregar dados.
+
+A suíte de navegador verifica que pagehide e eventos de recuperação não param o monitoramento nativo simulado. Esses testes não executam o ciclo de vida real do serviço Android: o APK foi compilado, mas encerramento/recriação pelo sistema e funcionamento físico continuam pendentes.
 
 ## Correção do GPS parado
 

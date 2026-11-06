@@ -107,6 +107,13 @@ export class MapView {
   }
   firstFix(fix) { this.map?.setView([fix.lat, fix.lng], 16); }
   invalidateMarkers() { this.lastRadarPaintPosition = null; }
+  clearData() {
+    for (const layer of Object.values(this.layers || {})) layer.clearLayers();
+    this.trail = []; this.position = null; this.lastUpdate = null;
+    this.lastRadarPaintPosition = null; this.positionStale = true;
+    this.$('visibleCount').textContent = 'Nenhum equipamento carregado';
+    this.updateState();
+  }
   update({ position, mapMatch, roadProvider, nearby, spatialIndex }) {
     this.position = position;
     this.positionStale = false;

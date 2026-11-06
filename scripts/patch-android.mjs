@@ -12,10 +12,30 @@ const drawableDir = path.join(android, 'app', 'src', 'main', 'res', 'drawable');
 await mkdir(javaDir, { recursive: true });
 await mkdir(drawableDir, { recursive: true });
 const nativeDir = path.join(root, 'android-template', 'app', 'src', 'main');
-for (const file of ['MainActivity.java', 'RadarTrackingPlugin.java', 'RadarTrackingService.java', 'RoadRegionSelector.java', 'RoadRegionStore.java', 'RoadSnapshotRevision.java']) {
+for (const file of ['MainActivity.java', 'RadarTrackingPlugin.java', 'RadarTrackingService.java', 'RoadRegionSelector.java', 'RoadRegionStore.java', 'RoadSnapshotRevision.java', 'LiveFixPolicy.java', 'GpsRecoveryPolicy.java']) {
   await copyFile(path.join(nativeDir, 'java', 'com', 'radalert', 'app', file), path.join(javaDir, file));
 }
 await copyFile(path.join(nativeDir, 'res', 'drawable', 'ic_stat_radar.xml'), path.join(drawableDir, 'ic_stat_radar.xml'));
+for (const resource of ['drawable/ic_radar_foreground.xml', 'mipmap-anydpi/ic_launcher.xml',
+  'mipmap-anydpi-v26/ic_launcher.xml', 'values/ic_launcher_background.xml']) {
+  const destination = path.join(android, 'app/src/main/res', resource);
+  await mkdir(path.dirname(destination), { recursive: true });
+  await copyFile(path.join(nativeDir, 'res', resource), destination);
+}
+for (const folder of ['mipmap-anydpi', 'mipmap-anydpi-v26']) {
+  const resourceDir = path.join(android, 'app/src/main/res', folder);
+  await copyFile(path.join(resourceDir, 'ic_launcher.xml'), path.join(resourceDir, 'ic_launcher_round.xml'));
+}
+
+const version = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8')).version;
+const [major, minor, patch] = version.split('.').map(Number);
+const gradlePath = path.join(android, 'app/build.gradle');
+let gradle = await readFile(gradlePath, 'utf8');
+const currentCode = Number(gradle.match(/versionCode\s+(\d+)/)?.[1] || 1);
+const versionCode = Math.max(currentCode, major * 1000000 + minor * 1000 + patch);
+gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${versionCode}`)
+  .replace(/versionName\s+["'][^"']+["']/, `versionName "${version}"`);
+await writeFile(gradlePath, gradle);
 
 let xml = await readFile(manifestPath, 'utf8');
 const permissions = [

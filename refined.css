@@ -1,279 +1,685 @@
-/* Radar Alert 0.14 — visual sóbrio e hierarquia voltada à condução.
-   A camada é isolada para preservar os estilos funcionais anteriores. */
+/* Radar Alert 0.17 — sistema visual Horizonte. Estilos funcionais em styles.css. */
 :root {
   color-scheme:dark;
-  --bg:#0e1115;
-  --panel:#181c22;
-  --line:#303640;
-  --blue:#a8c7ef;
-  --muted:#a6afbc;
-  --accent:#99bded;
-  --soft:#222730;
+  --bg:#101214; --panel:#191b1f; --soft:#22252a; --line:#353a41;
+  --muted:#a5aab0; --accent:#afbcce; --blue:#c0cad8; --green:#a5b4c8;
 }
-html { scroll-behavior:smooth; }
-body {
-  background:#0f1216;
-  color:#f0f2f5;
-  font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
-  letter-spacing:-.01em;
-}
-.app-shell { max-width:1180px; }
-.topbar {
-  border-bottom:1px solid #292f36;
-  padding-bottom:14px;
-  margin-bottom:19px;
-}
-.brand { gap:10px; }
-.brand-mark {
-  background:#20272e;
-  border:1px solid #394550;
-  box-shadow:none;
-  border-radius:12px;
-}
-.brand-mark svg { stroke:#b4d2ed; }
-.brand strong { color:#f7f8fa; font-size:18px; font-weight:730; letter-spacing:-.6px; text-transform:none; }
-.brand small { color:#929da9; font-size:11px; letter-spacing:.1px; }
-.desktop-nav { background:transparent; border-color:transparent; }
-.desktop-nav a { color:#aab5c0; font-weight:560; letter-spacing:0; }
-.desktop-nav a.active { background:#242b33; color:#f2f7ff; }
-.icon-btn { border-color:#303945; background:#1b2027; color:#d6dce6; box-shadow:none; border-radius:11px; font-size:12px; font-weight:600; }
-.icon-btn:hover { background:#272d35; }
-.pill { background:#20262c; border:1px solid #3a444c; color:#bfcbd5; font-size:11px; letter-spacing:0; font-weight:600; }
-.pill.on { background:#19332c; border-color:#356350; color:#b4e4d1; }
-.pill.on i,.data-dot.online { background:#7cd5ac; box-shadow:none; }
-.panel,.match-insight,.health-panel,.sim-panel,.source-panel,.map-panel {
-  background:#191e24;
-  border:1px solid #303740;
-  box-shadow:none;
-  border-radius:18px;
-}
-.intro-row h1 { font-weight:720; letter-spacing:-1.1px; }
-.eyebrow,.micro-label { color:#95a6b7; font-weight:620; letter-spacing:.03em; text-transform:none; }
-.data-chip { background:#1a2422; border:1px solid #34544a; box-shadow:none; }
-.data-chip b { color:#d9eae4; font-weight:650; }
-.data-chip small { color:#a3b6af; }
-.primary-panel>.panel-head { align-items:center; }
-.panel-head h2 { font-weight:650; font-size:18px; color:#f4f6f8; }
-.confidence,.match-badge { border-radius:9px; letter-spacing:0; font-weight:650; }
-.confidence.neutral,.match-badge.idle { background:#2c333a; color:#c7d2da; }
-.confidence.warn,.match-badge.review,.match-badge.stationary { background:#403426; color:#f3d3a4; }
-.confidence.good,.match-badge.confirmed { background:#203a31; color:#a3e4c9; }
-.confidence.danger,.match-badge.blocked { background:#462e35; color:#f3bdc7; }
-.drive-mode-label { color:#899aa8; letter-spacing:.02em; font-size:11px; font-weight:600; }
-.drive-mode-label:before { width:6px; height:6px; background:#8ca9ba; }
-.cockpit-strip { gap:10px; }
-.cockpit-strip>div { background:#12171c; border:1px solid #303b45; border-radius:13px; padding:16px; }
-.cockpit-strip span { color:#abb7c2; font-size:11px; font-weight:570; letter-spacing:0; }
-.cockpit-strip strong { color:#e6ebf1; font-weight:650; }
-.cockpit-strip strong b { color:#f5f7f9; font-size:40px; font-weight:680; letter-spacing:-1.5px; }
-.cockpit-strip small { font-size:12px; font-weight:500; }
-.radar-main { background:#252b33; border:1px solid #38424e; border-radius:14px; box-shadow:none; }
-.big-distance { font-family:inherit; font-weight:680; font-variant-numeric:tabular-nums; letter-spacing:-3px; color:#fafbfc; }
-.big-distance small { color:#b1bac5; font-family:inherit; }
-.road-label { color:#c0c9d2; font-size:12px; line-height:1.5; }
-.speed-sign { box-shadow:none; border-color:#e75d63; }
-.speed-sign strong { font-family:inherit; font-weight:720; }
-.metrics { gap:10px; }
-.metric { border-color:#384049; }
-.metric span { font-size:11px; font-weight:540; letter-spacing:0; color:#a0b0be; }
-.metric b { font-family:inherit; font-size:14px; color:#f0f2f5; font-weight:640; }
-.btn { border-radius:11px; font-size:13px; font-weight:620; letter-spacing:0; box-shadow:none; min-height:46px; transition:background .15s ease; }
+html { scroll-behavior:smooth; background:var(--bg); }
+.dialog-open { overflow:hidden; }
+body { background:var(--bg); color:#edf0f3; font-family:'Segoe UI',system-ui,-apple-system,sans-serif; letter-spacing:-.015em; }
+button,input,select { font:inherit; }
+button,a,input,select,summary { -webkit-tap-highlight-color:transparent; }
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible { outline:3px solid var(--accent); outline-offset:4px; }
+.app-shell { max-width:1200px; padding:28px 32px 36px; }
+.topbar { height:auto; min-height:60px; gap:20px; margin-bottom:34px; padding-bottom:22px; border-bottom:1px solid #2b2f35; }
+.brand { gap:12px; min-width:190px; }
+.brand-mark { width:44px; height:44px; border-radius:14px; background:var(--accent); border:0; box-shadow:none; }
+.brand-mark svg { width:26px; stroke:#1f2732; stroke-width:1.8; }
+.brand strong { color:#f1f3f6; font-size:20px; letter-spacing:-.8px; font-weight:750; text-transform:none; }
+.brand small { font-size:10px; letter-spacing:.02em; color:#a5aab0; margin-top:4px; }
+.desktop-nav { background:#191b1f; border:1px solid #30343a; padding:5px; border-radius:14px; gap:3px; }
+.desktop-nav a { font-size:12px; font-weight:600; color:#b5b9bf; padding:10px 13px; border-radius:9px; letter-spacing:0; }
+.desktop-nav a.active { color:#dee3ea; background:#2d3643; }
+.top-actions { gap:8px; flex-wrap:nowrap; }
+.icon-btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; border:1px solid #353a41; border-radius:12px; background:#1c1f24; color:#d8dce2; font-size:12px; font-weight:600; padding:11px; box-shadow:none; }
+.icon-btn:hover { background:#2b3037; }
+.icon-btn svg { width:19px; height:19px; stroke:currentColor; }
+.icon-btn span { display:none; }
+.pill { font-size:10px; letter-spacing:0; font-weight:650; white-space:nowrap; color:#b2b6bc; background:#202328; border:1px solid #3b4047; padding:8px 10px; }
+.pill.on { color:#cdd5e0; background:#232c39; border-color:#41536b; }
+.pill i,.data-dot { box-shadow:none; background:#858b93; flex:none; }
+.pill.on i,.data-dot.online { background:var(--accent); box-shadow:none; }
+.data-dot.offline { background:#efb16f; box-shadow:none; }
+.home-intro { align-items:center; gap:24px; margin-bottom:24px; }
+.eyebrow { font-size:10px; letter-spacing:.13em; font-weight:650; color:#aeb6c0; text-transform:uppercase; }
+#roadNameTag { display:flex; align-items:center; gap:7px; }
+.live-mark { width:5px; height:5px; border-radius:50%; background:var(--accent); }
+.intro-row h1 { font-size:clamp(26px,3vw,36px); font-weight:650; letter-spacing:-1.3px; margin:10px 0 6px; }
+.intro-copy { font-size:13px; color:var(--muted); line-height:1.5; }
+.data-chip { max-width:350px; min-width:240px; padding:13px 15px; border:1px solid #353a41; border-radius:14px; background:#191c21!important; box-shadow:none; }
+.data-chip b { font-size:12px; font-weight:650; color:#dce1e9; }
+.data-chip small { color:#a5abb4; font-size:10px; line-height:1.5; margin-top:4px; }
+.dashboard-grid { grid-template-columns:minmax(0,1.65fr) minmax(285px,.8fr); gap:20px; align-items:start; }
+.panel,.match-insight,.health-panel,.sim-panel,.source-panel,.map-panel { background:var(--panel); border:1px solid #333840; box-shadow:none; border-radius:22px; }
+.primary-panel { display:flex; flex-direction:column; padding:26px; overflow:hidden; }
+.primary-panel::before { display:none; }
+.primary-panel>.panel-head { order:1; align-items:start; gap:16px; padding-bottom:18px; border-bottom:1px solid #30353b; }
+.panel-head h2 { font-size:17px; line-height:1.35; font-weight:600; color:#e8ecf1; margin:6px 0 0; }
+.micro-label { color:#aeb5bf; font-weight:600; letter-spacing:.02em; font-size:11px; text-transform:none; }
+.confidence,.match-badge { flex:none; white-space:normal; max-width:160px; font-size:10px; line-height:1.35; padding:7px 10px; font-weight:650; letter-spacing:0; border-radius:8px; }
+.confidence.neutral,.match-badge.idle { background:#30343a; color:#c5cad0; }
+.confidence.warn,.match-badge.review,.match-badge.stationary { background:#3d3322; color:#f4d393; }
+.confidence.good,.match-badge.confirmed { background:#27313f; color:#afbcce; }
+.confidence.danger,.match-badge.blocked { background:#442c2b; color:#ffc5ba; }
+.primary-panel>.drive-mode-label { order:2; color:#9fa7b2; font-size:10px; letter-spacing:.08em; margin:20px 0 0; font-weight:600; text-transform:uppercase; }
+.drive-mode-label:before { background:#a8b6c9; box-shadow:none; width:5px; height:5px; }
+.primary-panel>.cockpit-strip { order:3; }
+.cockpit-strip { display:grid; grid-template-columns:1.1fr 1fr; gap:16px; margin:13px 0 19px; }
+.cockpit-strip>div { border:0; padding:0; background:transparent; border-radius:0; min-height:100px; }
+.cockpit-strip span { font-size:11px; letter-spacing:0; font-weight:500; color:#aeb6c0; }
+.cockpit-strip strong { margin:6px 0 0; font-size:16px; font-weight:600; color:#dee3ea; }
+.cockpit-strip strong b { font-family:inherit; font-size:66px; line-height:1.05; font-weight:600; color:#f1f3f6; letter-spacing:-3px; font-variant-numeric:tabular-nums; }
+.cockpit-strip small { font-size:13px; margin-left:6px; color:#a7adb6; font-weight:500; }
+.cockpit-strip .road-status-tile { position:relative; padding:8px 0 8px 21px; border-left:1px solid #343941; }
+.road-status-tile span { position:relative; z-index:1; }
+.road-status-tile strong { font-size:14px; max-width:145px; line-height:1.45; padding-right:3px; position:relative; z-index:1; }
+.road-glyph { position:absolute; height:54px; width:54px; right:2px; bottom:3px; fill:none; stroke:#373f49; stroke-width:1.7; }
+.primary-panel>.radar-main { order:4; }
+.radar-main { display:grid; grid-template-columns:minmax(0,1fr) 116px; align-items:center; min-height:170px; gap:20px; padding:22px; margin:0; border-radius:17px; background:#222933; border:1px solid #3d4d63; box-shadow:none; }
+.distance-area { min-width:0; }
+.radar-main .micro-label { color:#c0cad9; font-size:11px; line-height:1.5; }
+.big-distance { font-family:inherit; font-size:76px; font-weight:650; color:var(--accent); font-variant-numeric:tabular-nums; letter-spacing:-4px; line-height:1.05; margin:10px 0 0; }
+.big-distance small { font-family:inherit; font-size:18px; font-weight:500; color:#b3bfd0; margin-left:7px; letter-spacing:0; }
+.speed-area { min-width:0; }
+.speed-sign { height:90px; width:90px; margin:9px auto 0; background:#f5f7f9; border:6px solid #ec6b61; box-shadow:none; color:#171b20; }
+.speed-sign strong { font-family:inherit; font-size:35px; font-weight:750; letter-spacing:-1px; }
+.speed-sign span { font-size:9px; font-weight:650; }
+.primary-panel>.road-label { order:5; margin:12px 2px 0; max-width:none; font-size:11px; line-height:1.65; color:#b4bbc5; }
+.primary-panel>.button-row { order:6; margin-top:21px; }
+.button-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; }
+.btn { justify-content:center; min-height:48px; border-radius:12px; font-size:13px; font-weight:650; letter-spacing:0; padding:12px 16px; box-shadow:none; transition:background .15s ease; }
+.btn svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.7; }
 .btn:hover { transform:none; filter:none; }
-.btn-primary { background:#8eb5e6; color:#131b25; border-color:#8eb5e6; font-weight:720; }
-.btn-primary:hover { background:#afcdf1; }
-.btn-danger { background:#482c31; border-color:#70444b; color:#f8d1d4; }
-.btn-secondary { background:#2b323b; border-color:#424d57; color:#e0e6ed; }
-.btn-secondary:hover { background:#363f49; }
-.notice { background:#212830; color:#bbc5cf; border-radius:11px; font-size:12px; }
-.notice-icon { background:#364452; color:#bed9f2; }
-.side-panel,.health-panel,.sim-panel { background:#191e24; }
-.equipment-toggle { background:#292f37; color:#d8e2eb; border-color:#414a54; }
-.next-detail { border-color:#30373f; color:#a4afbb; }
-.next-detail b { color:#ecf1f6; }
-.disclaimer { background:#23262b; border-color:#3d3930; color:#afb7c2; }
-.disclaimer strong { color:#e5c49c; }
-.metrics-details { margin-top:14px; border:1px solid #333c45; border-radius:12px; background:#151b21; }
-.metrics-details>summary { cursor:pointer; padding:12px 14px; min-height:44px; font-size:12px; font-weight:620; color:#c4d1dd; list-style:none; display:flex; justify-content:space-between; align-items:center; }
+.btn-primary { background:var(--accent); border-color:var(--accent); color:#1b232d; box-shadow:none; }
+.btn-primary:hover { background:#c8d1de; border-color:#c8d1de; }
+.btn-secondary,#refreshBtn { background:#25292e; border-color:#3e454e; color:#d6dde6; }
+.button-row #refreshBtn { background:#25292e; }
+.btn-secondary:hover { background:#2f3742; }
+.btn-danger { background:#462e2c; border-color:#87534b; color:#ffd4c9; }
+.btn-ghost { border-color:#3e4651; color:#c4cdd9; }
+.btn:disabled { opacity:.55; }
+.primary-panel>.metrics-details { order:7; margin-top:16px; }
+.metrics-details { background:transparent; border:0; border-top:1px solid #343940; border-radius:0; }
+.metrics-details>summary { padding:15px 1px; min-height:46px; color:#b8bfc9; font-size:12px; cursor:pointer; display:flex; justify-content:space-between; list-style:none; }
 .metrics-details>summary::-webkit-details-marker { display:none; }
-.metrics-details>summary:after { content:'⌄'; font-size:17px; line-height:1; color:#a9b9c7; }
-.metrics-details[open]>summary:after { transform:rotate(180deg); }
-.metrics-details .metrics { margin:0 14px 13px; padding-top:13px; border-top:1px solid #343c46; }
-.workspace-head h2 { color:#f0f3f6; font-weight:720; letter-spacing:-.7px; }
-.workspace-head p { color:#abb9c6; }
-.health-heading h3,.match-insight-head h3,.sim-top h3 { color:#edf1f5; font-weight:670; }
-.health-heading>span { color:#bdc7d2; font-weight:560; }
-.health-row { background:#20262c; border-color:#353e47; border-radius:11px; }
-.health-row strong { color:#f1f4f6; }
-.health-row small,.health-footnote { color:#aab6c0; }
-.health-status { color:#b6c8d7; font-weight:650; }
-.insights-grid>.match-insight,.match-insight { background:#1b2026; border-color:#343d46; }
-.match-road { color:#f5f6f8; font-size:19px; font-weight:660; }
-.match-explanation { color:#bbc4cf; font-size:13px; line-height:1.55; }
-.match-facts>div { background:#141a20; border-color:#303a44; border-radius:10px; }
-.match-facts span { color:#9aabb9; font-weight:570; letter-spacing:0; font-size:11px; }
-.match-facts b { font-family:inherit; font-weight:680; color:#eff3f7; }
-.match-insight-footer { border-color:#353d46; }
-.text-action { color:#a7c8ef; font-weight:610; text-decoration:none; }
-.candidate-section { border-color:#363f49; }
-.candidate-header>span { font-size:12px; letter-spacing:0; font-weight:650; }
-.candidate-header small { color:#aab4be; }
-.candidate-row { background:#20262d; border-color:#343d46; border-radius:10px; }
-.candidate-row.primary { background:#302a22; border-color:#665138; }
-.candidate-name b { color:#eaf0f5; font-weight:650; }
-.candidate-name small { color:#a9b4c0; }
-.candidate-offset { font-family:inherit; font-weight:660; }
-.stability-card { margin-top:15px; display:grid; grid-template-columns:7px minmax(0,1fr) auto; align-items:start; gap:11px; background:#242a31; border:1px solid #38414a; border-radius:11px; padding:13px; }
-.stability-icon { width:7px; height:7px; border-radius:50%; background:#8eb5e6; margin-top:6px; }
-.stability-card strong { display:block; font-size:13px; font-weight:670; color:#edf1f4; }
-.stability-card p { font-size:12px; line-height:1.45; color:#b6c0ca; margin:4px 0 0; }
-.stability-count { white-space:nowrap; font-size:11px; color:#c2ccd6; background:#303943; padding:5px 8px; border-radius:8px; }
-.stability-count[data-status="changing"] { color:#f2ce9c; background:#423526; }
-.insight-help { border-color:#3b434d; background:#20262c; }
-.sim-watermark { background:#222c2b; border-color:#345047; color:#b7d9c9; border-radius:9px; font-weight:630; letter-spacing:0; }
-.sim-canvas { background:#1d252c; border-color:#38414b; }
-.sim-controls>select { background:#262d35; border-color:#485361; }
-.sim-mini-grid>div { background:#242b33; border-color:#3a444f; }
-.sim-buttons .btn { font-size:13px; }
-.sim-progress-bar>div { background:#8eb5e6; }
+.metrics-details>summary:after { content:'+'; font-size:17px; line-height:1; }
+.metrics-details[open]>summary:after { content:'−'; }
+.metrics { margin:2px 0 14px; gap:14px; }
+.metric { border-color:#383f49; }
+.metric span { color:#99a2af; font-size:10px; font-weight:500; letter-spacing:0; }
+.metric b { color:#e3e8ee; font:600 13px 'Segoe UI',sans-serif; }
+.primary-panel>.notice { order:8; }
+.notice { margin:3px 0 0; border:0; background:#22252a; color:#b3bbc6; border-radius:11px; font-size:11px; line-height:1.6; padding:12px; }
+.notice-icon { background:#333d4c; color:#c0cad8; }
+.primary-panel>.gps-error { order:9; color:#ffc9be; font-size:12px; }
+.side-panel { padding:23px; }
+.side-panel .eyebrow { font-size:9px; }
+.side-panel h2 { font-size:17px; }
+.equipment-toggle { color:#cad3df; background:#232a33; border-color:#3c4655; min-height:40px; border-radius:9px; }
+.equipment-body { padding-top:13px; }
+.next-detail { border-color:#2f3640; padding:13px 0; color:#a5afbd; font-size:11px; line-height:1.5; }
+.next-detail b { color:#dbe1e9; font-size:11px; font-weight:600; max-width:55%; }
+.side-divider { background:#323942; }
+.disclaimer { background:transparent; border:0; border-left:2px solid #4d5e75; padding:0 0 0 12px; margin-top:24px; color:#9da6b3; font-size:11px; }
+.disclaimer strong { color:#d0d7e2; font-weight:600; }
+.workspace-head { margin:7px 0 24px; }
+.workspace-head h2,.map-heading h2,.source-panel h2 { font-size:28px; font-weight:650; letter-spacing:-.8px; color:#e8ecf1; margin-top:8px; }
+.workspace-head p,.map-heading p { font-size:13px; line-height:1.6; color:#a3abb7; }
+.insights-grid { gap:20px; grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr); }
+.health-panel,.insights-grid>.match-insight { padding:24px; border:1px solid #333a43; background:var(--panel); border-radius:22px; }
+.health-heading { flex-wrap:wrap; }
+.health-heading h3,.match-insight-head h3 { font-size:18px; color:#dfe4eb; font-weight:600; }
+.health-heading>span { color:#9facbd; font-size:10px; }
+.health-row { background:#1e2329; border:1px solid #2f3743; border-radius:12px; padding:13px; gap:12px; }
+.health-row strong { color:#dfe4eb; font-weight:600; font-size:13px; }
+.health-row small { color:#9fa9b8; font-size:11px; }
+.health-status { font-size:9px; letter-spacing:.04em; }
+.health-good .health-dot { background:#afbcce; box-shadow:none; }
+.health-warn .health-dot { background:#edbf79; box-shadow:none; }
+.health-good .health-status { color:#afbcce; }
+.health-warn .health-status { color:#efca8a; }
+.health-footnote { color:#9ba5b3; font-size:11px; }
+.match-road { font-size:22px; color:#e9ecf1; font-weight:600; }
+.match-explanation { font-size:13px; color:#a8b2c1; line-height:1.6; }
+.match-facts>div { background:#13171c; border-color:#2d3848; border-radius:12px; }
+.match-facts span { font-size:10px; color:#9aa6b8; letter-spacing:0; }
+.match-facts b { font-family:inherit; color:#d5dce5; font-size:16px; font-weight:600; }
+.match-insight-footer,.candidate-section { border-color:#343d4a; }
+.text-action { color:#c1cbd9; font-weight:600; font-size:12px; text-decoration:none; min-height:42px; }
+.candidate-row { background:#1b222b; border-color:#313d4d; border-radius:10px; }
+.candidate-row.primary { background:#222a34; border-color:#6d6641; }
+.candidate-name b { color:#dde2ea; }
+.candidate-name small,.candidate-header small { color:#a3aebd; }
+.candidate-offset { font-family:inherit; color:#c5cfdc; }
+.stability-card { margin-top:16px; display:grid; grid-template-columns:6px minmax(0,1fr) auto; gap:10px; align-items:start; border:1px solid #333c48; border-radius:12px; padding:13px; background:#1f2630; }
+.stability-icon { width:6px; height:6px; border-radius:50%; background:var(--accent); margin-top:6px; }
+.stability-card strong { color:#dae0e9; font-size:12px; font-weight:600; }
+.stability-card p { font-size:11px; line-height:1.5; color:#a8b4c4; margin:5px 0 0; }
+.stability-count { font-size:10px; color:#d1d8e3; background:#2a3545; padding:5px 7px; border-radius:6px; white-space:nowrap; }
+.stability-count[data-status="changing"] { background:#483c21; color:#f0d8a4; }
+.insight-help { background:transparent; border-color:#323b48; color:#b3bfcf; }
+.insight-help summary,.insight-help p,.match-insight-footer>span { color:#b3bfcf; }
+.insight-help summary::marker { color:#afbcce; }
+.sim-panel { padding:25px; margin-top:20px; }
+.sim-top h3 { font-size:24px; font-weight:600; color:#e2e7ee; }
+.sim-top p,.sim-controls>p,.sim-meta small,.sim-disclaimer { color:#a5b1c1; font-size:12px; }
+.sim-watermark { background:#242e3c; border:1px solid #38475c; color:#c4cedb; font-size:10px; border-radius:8px; letter-spacing:.07em; }
+.sim-canvas { background:#13171d; border-color:#323c4a; border-radius:16px; }
+.sim-road-art { background:#1e2631; }
+.sim-road-art:before,.sim-road-art:after { opacity:.4; }
+.sim-dash-road { background:#2b3037; border-color:#5c6b80; }
+.sim-car { background:#afbcce; color:#1c232d; border-color:#e7ebf0; box-shadow:0 0 0 5px #afbcce1a; }
+.sim-progress-bar { background:#2e3743; }
+.sim-progress-bar>div { background:var(--accent); }
+.sim-progress-text,.sim-progress-text strong,.sim-start,.sim-end { color:#b2bed0; }
+.sim-controls>label { color:#acb9cc; letter-spacing:.03em; }
+.sim-controls>select,.select-row select { background:#21272f; border:1px solid #445060; color:#eaedf2; border-radius:11px; min-height:46px; }
+.sim-mini-grid>div { background:#20252d; border-color:#353f4e; }
+.sim-mini-grid span { color:#9eabbd; }
+.sim-mini-grid strong,.sim-meta strong { color:#e4e9ef; }
+.sim-results { border-color:#343d4a; }
+.sim-results>strong { color:#c9d2de; }
+.sim-results p { background:#232b36; border-color:#374354; color:#c9d2de; }
+.map-panel { padding:24px; }
 .map-panel>.map-heading { align-items:flex-start; }
-.map-panel .map { border-color:#333b46; border-radius:13px; }
-.map-heading h2,.source-panel h2 { font-size:20px; font-weight:680; color:#f3f5f8; }
-.map-heading p { font-size:12px; color:#aab6c1; line-height:1.55; }
-.map-legend { flex-wrap:wrap; gap:9px 15px; white-space:normal; color:#b8c6d4; font-size:11px; }
-.legend-accuracy { display:inline-block; width:11px; height:11px; border:1px solid #a8bdd9; background:#6483aa33; border-radius:50%; }
-.map-tool { background:#20262df0; border:1px solid #4d5864; box-shadow:none; }
-.map-state { background:#222831eb; border:1px solid #414c59; color:#ecf2f7; box-shadow:none; border-radius:9px; }
-.map-accuracy { position:absolute; top:15px; left:15px; z-index:650; pointer-events:none; font-size:11px; padding:8px 10px; border-radius:9px; color:#ecf2f8; background:#222831ec; border:1px solid #47545e; max-width:calc(100% - 105px); line-height:1.35; }
-.map-actions { flex-wrap:wrap; justify-content:flex-start; gap:10px; }
-.map-actions span { flex:1 1 100%; color:#a5afb9; }
-.trail-toggle { border-radius:10px; background:#272e36; border-color:#454e58; color:#dce5ef; font-weight:590; }
-.trail-toggle[aria-pressed="true"] { background:#334152; border-color:#5c779a; }
-.nearby-item { border-color:#343b44; }
-.nearby-item b { color:#e9eef5; font-size:13px; }
-.nearby-item small { color:#aeb8c3; font-size:11px; }
-.nearby-distance { font-family:inherit; font-size:13px; color:#d9e7f5; font-weight:660; }
-.muted-tag { color:#bec8d4; background:#2d353d; }
-.source-panel p { font-size:12px; color:#b4bfc9; }
-.source-stats b { font-family:inherit; font-weight:670; color:#eef3f7; }
-.source-stats span { font-size:11px; }
-.source-link { font-size:12px; color:#afcced; }
-.modal-content { background:#1b2026; border-color:#3c4550; box-shadow:0 20px 70px #0009; }
-.modal-header,.modal-footer { border-color:#37404b; }
-.modal-header h3 { font-size:17px; }
-.modal-body { font-size:13px; color:#c6d0da; }
-.diag-table td { font-size:12px; padding:10px 7px; border-color:#343e48; }
-.diag-table td:first-child { color:#aab6c1; }
-.diag-log-box { background:#14191f; border-color:#343e49; color:#ccd8e5; font-size:11px; height:180px; }
-.settings-group { background:#242a31; border-color:#3b444e; }
-.settings-group h4 { color:#e1eaf3; font-size:12px; letter-spacing:0; text-transform:none; }
-.switch-row b { font-size:13px; }
-.switch-row small { font-size:12px; color:#aeb9c5; }
-.select-row label,.select-row select,.slider-row label,.privacy-note,.markdown-content p { font-size:12px; }
-.select-row select { background:#303842; border-color:#515f6e; color:#eef1f5; min-height:40px; }
-.markdown-content h4 { color:#bcd8f4; font-size:13px; }
-footer { color:#7f8b96; font-size:10px; letter-spacing:0; }
-footer b { color:#a7b0ba; }
-.mobile-nav { background:#15191ef7; border-top:1px solid #303941; box-shadow:none; backdrop-filter:blur(18px); }
-.mobile-nav a { border-radius:10px; color:#a5b0bc; font-weight:550; }
-.mobile-nav a.active { background:#2e3740; color:#f6f8fa; }
-.mobile-nav a.active svg { stroke:#d4e5f7; }
+.map-legend { flex-wrap:wrap; white-space:normal; gap:9px 14px; font-size:10px; color:#afbaca; max-width:360px; }
+.legend-accuracy { width:10px; height:10px; border-radius:50%; border:1px solid #a1c5d0; background:#5f95a544; }
+.map-panel .map { border:1px solid #3e4958; border-radius:16px; background:#1c222b; height:480px; }
+.map-tool { background:#1b2028f5; border:1px solid #48576b; box-shadow:none; color:#dde2ea; min-width:44px; min-height:44px; }
+.map-state { background:#191f27ed; border:1px solid #434f60; color:#dee3ea; border-radius:9px; box-shadow:none; font-size:11px; }
+.map-accuracy { position:absolute; top:15px; left:15px; z-index:650; pointer-events:none; max-width:calc(100% - 100px); border:1px solid #485465; border-radius:9px; background:#1b2028ef; color:#d2d9e3; padding:8px 10px; font-size:10px; line-height:1.5; }
+.map-bottom { color:#a8b3c3; font-size:10px; gap:14px; flex-wrap:wrap; line-height:1.5; }
+.map-bottom a { color:#b7c3d3; }
+.map-actions { display:flex; flex-wrap:wrap; justify-content:flex-start; gap:12px; }
+.map-actions span { flex:1 1 100%; color:#9ca9ba; font-size:11px; }
+.trail-toggle { min-height:44px; background:#212934; border:1px solid #3e4a5c; border-radius:10px; color:#c9d2de; font-size:12px; font-weight:600; }
+.trail-toggle[aria-pressed="true"] { background:#2e3a4b; border-color:#61799b; }
+.bottom-grid { gap:20px; }
+.nearby-panel,.source-panel { padding:24px; }
+.nearby-list { margin-top:22px; }
+.nearby-item { grid-template-columns:minmax(0,1fr) auto; border:1px solid #333d4a; border-radius:13px; background:#1d232b; padding:16px; margin-bottom:10px; gap:15px; }
+.nearby-item b { color:#dee3eb; font-size:14px; font-weight:600; }
+.nearby-item small { color:#9fadc0; font-size:11px; line-height:1.5; margin-top:6px; }
+.nearby-distance { color:var(--accent); font:650 21px 'Segoe UI',sans-serif; white-space:nowrap; letter-spacing:-.7px; }
+.empty-list { padding:34px 18px; text-align:center; border:1px dashed #434f61; border-radius:14px; color:#a1b0c4; font-size:13px; line-height:1.7; }
+.muted-tag { background:#2a3442; color:#c3cdda; font-size:11px; padding:7px 10px; }
+.source-panel p { color:#a8b3c3; font-size:12px; line-height:1.8; }
+.source-stats { gap:12px; padding:17px 0; border-block:1px solid #323c4b; }
+.source-stats b { font-family:inherit; color:#e0e5ec; font-weight:650; font-size:24px; }
+.source-stats span { color:#9eabbe; font-size:10px; line-height:1.5; }
+.source-link { font-size:12px; color:#c2ccd9; }
+.modal-overlay { background:#06080abd; backdrop-filter:blur(9px); padding:20px; }
+.modal-content { background:#1b1e23; border:1px solid #3e4856; border-radius:23px; max-width:600px; max-height:90dvh; box-shadow:0 24px 90px #0008; }
+.modal-header { padding:20px 23px; border-color:#333c49; align-items:center; gap:12px; }
+.modal-header,.modal-footer { background:#1d222a; }
+.modal-header h3 { font-size:18px; font-weight:600; letter-spacing:-.4px; line-height:1.35; color:#e4e8ee; }
+.close-btn { min-width:44px; min-height:44px; font-size:26px; background:#262f3b; color:#cdd5e0; border-radius:11px; }
+.modal-body { padding:22px; color:#b7c3d3; font-size:13px; }
+.modal-footer { border-color:#343e4b; padding:17px 22px; gap:10px; }
+.settings-group { background:#20262f; border:1px solid #333f51; border-radius:15px; padding:18px; }
+.settings-group h4 { color:#d1d8e3; font-size:12px; text-transform:none; letter-spacing:.02em; margin-top:0; }
+.switch-row { gap:15px; min-height:48px; }
+.switch-row b { color:#e0e5ec; font-size:13px; font-weight:600; }
+.switch-row small { color:#9fadc1; font-size:11px; line-height:1.5; }
+.switch-row input:checked+i { background:#9cacc3; }
+.switch-row input:focus-visible+i { outline:3px solid var(--accent); outline-offset:4px; }
+.slider-row label,.select-row label { color:#b5c1d2; font-size:12px; }
+input[type="range"] { accent-color:#a8b6ca; min-height:30px; }
+.select-row select { font-size:12px; padding:9px; }
+.privacy-note,.markdown-content p { color:#aab7ca; font-size:12px; line-height:1.75; }
+.markdown-content h4 { color:#ccd4e0; font-size:14px; }
+.diag-table { width:100%; table-layout:fixed; }
+.diag-table td { padding:11px 8px; border-color:#323d4c; font-size:11px; color:#d1d8e3; overflow-wrap:anywhere; }
+.diag-table td:first-child { width:42%; color:#9fadc1; }
+.diag-log-box { background:#11151b; border-color:#2e3a4b; color:#c4cedb; font-size:11px; line-height:1.65; }
+.alert-banner { background:#3a3020; border-color:#77603a; color:#f7dbad; font-size:12px; }
+footer { margin-top:26px; font-size:10px; color:#919ba9; letter-spacing:0; line-height:1.6; }
+footer b { color:#c6cfdc; }
+.mobile-nav { background:#191c21f5; border-top:1px solid #3a4555; box-shadow:none; backdrop-filter:blur(18px); }
+.mobile-nav a { color:#a4b1c4; border-radius:12px; font-size:10px; font-weight:600; }
+.mobile-nav a.active { color:#d3dae4; background:#2b3646; }
+.mobile-nav a.active svg { stroke:#afbcce; }
+.contrast-high .panel,.contrast-high .match-insight,.contrast-high .health-row { border-color:#a8b6c9!important; }
+.contrast-high .micro-label,.contrast-high .eyebrow,.contrast-high .metric span { color:#d7dee7!important; }
+.contrast-high .road-label,.contrast-high .match-explanation { color:#edf0f4!important; }
+@media(min-width:821px) {
+  .home-intro { display:none; }
+  body[data-active-screen="painel"] .home-intro { display:flex; }
+  main>[data-screen] { display:none!important; margin-top:0; }
+  body[data-active-screen="painel"] main>[data-screen="painel"],body[data-active-screen="proximos"] main>[data-screen="proximos"] { display:grid!important; }
+  body[data-active-screen="via"] main>[data-screen="via"],body[data-active-screen="mapa"] main>[data-screen="mapa"] { display:block!important; }
+}
+@media(max-width:1050px) and (min-width:821px) {
+  .app-shell { padding:22px; }
+  .topbar { gap:10px; }
+  .brand { min-width:160px; }
+  .desktop-nav a { padding:10px 9px; font-size:11px; }
+  .pill { display:none; }
+  .dashboard-grid { grid-template-columns:minmax(0,1.5fr) minmax(260px,.8fr); gap:16px; }
+  .primary-panel { padding:22px; }
+  .button-row { grid-template-columns:1fr; }
+  .radar-main { grid-template-columns:minmax(0,1fr) 95px; padding:18px; }
+  .big-distance { font-size:64px; }
+}
 @media(max-width:820px) {
-  .app-shell { padding:13px 14px calc(98px + env(safe-area-inset-bottom)); }
-  .topbar { display:flex; align-items:center; flex-wrap:nowrap; gap:10px; padding-bottom:14px; margin-bottom:14px; }
-  .brand { min-width:0; flex:1 1 auto; display:flex; align-items:center; }
-  .brand-mark { width:38px; height:38px; flex:none; }
-  .brand-mark svg { width:21px; }
-  .brand strong { font-size:17px; letter-spacing:-.5px; }
-  .brand small { font-size:10px; }
-  .top-actions { display:grid; grid-template-columns:repeat(2,41px); gap:6px; flex:none; }
-  #gpsStatus { grid-row:2; grid-column:1/-1; align-self:center; justify-self:end; min-height:24px; font-size:10px; line-height:1.1; padding:5px 8px; white-space:nowrap; }
-  #diagBtn,#settingsBtn { grid-row:1; grid-column:auto; height:41px; width:41px; min-height:41px; padding:9px; border-radius:10px; display:grid; place-items:center; }
-  #diagBtn span,#settingsBtn span { display:none; }
-  #installBtn:not(.hidden) { grid-column:1/-1; grid-row:3; }
-  .home-intro { margin-bottom:12px; }
-  .home-intro>div:first-child { display:none; }
-  .data-chip { width:100%; border-radius:12px; padding:9px 12px; min-width:0; }
-  .data-chip b { font-size:12px; }
-  .data-chip small { font-size:10px; }
-  .dashboard-grid { gap:12px; }
-  .primary-panel { padding:18px 16px 16px; border-radius:19px; }
-  .primary-panel>.panel-head { order:1; }
-  .primary-panel>.drive-mode-label { order:2; margin-top:12px; }
-  .primary-panel>.cockpit-strip { order:3; }
-  .primary-panel>.radar-main { order:4; }
-  .primary-panel>.button-row { order:5; }
-  .primary-panel>.metrics-details { order:6; }
-  .primary-panel>.notice { order:7; }
-  .primary-panel>.gps-error { order:8; }
-  .primary-panel>.panel-head h2 { font-size:17px; }
-  .confidence { max-width:130px; font-size:10px; padding:7px 9px; }
-  .cockpit-strip { grid-template-columns:minmax(0,1fr) minmax(0,.93fr); gap:9px; margin-top:12px; }
-  .cockpit-strip>div { padding:14px 12px; min-height:98px; }
-  .cockpit-strip span { font-size:11px; }
-  .cockpit-strip strong { font-size:12px; margin-top:8px; }
-  .cockpit-strip strong b { font-size:39px; }
-  .radar-main { padding:17px 14px; margin-top:12px; min-height:172px; border-radius:14px; gap:10px; }
-  .radar-main .micro-label { font-size:11px; }
-  .big-distance { font-size:clamp(43px,12vw,60px); letter-spacing:-2.5px; margin:8px 0; }
-  .big-distance small { font-size:14px; }
-  .road-label { font-size:12px; line-height:1.45; }
-  .speed-area { min-width:76px; }
-  .speed-sign { width:72px; height:72px; border-width:5px; }
+  .app-shell { max-width:640px; padding:19px 18px calc(98px + env(safe-area-inset-bottom)); }
+  .topbar { display:flex; height:auto; min-height:57px; margin-bottom:22px; padding-bottom:17px; flex-wrap:nowrap; gap:12px; }
+  .brand { flex:1; min-width:0; gap:10px; }
+  .brand-mark { width:40px; height:40px; flex:none; border-radius:13px; }
+  .brand strong { font-size:19px; }
+  .brand small { font-size:9px; }
+  .top-actions { display:grid; grid-template-columns:44px 44px; gap:5px; flex:none; }
+  #settingsBtn,#diagBtn { width:44px; height:44px; padding:11px; min-height:44px; grid-row:1; }
+  #gpsStatus { grid-column:1/-1; grid-row:2; border:0; background:transparent; padding:4px 1px 0; justify-self:end; font-size:9px; min-height:18px; }
+  #installBtn:not(.hidden) { grid-row:3; grid-column:1/-1; }
+  .home-intro { flex-direction:column; align-items:stretch; gap:13px; margin-bottom:17px; }
+  .home-intro>div:first-child { display:block; }
+  #roadNameTag { font-size:9px; }
+  .intro-row h1 { font-size:27px; margin:7px 0 0; letter-spacing:-1px; line-height:1.2; }
+  .intro-copy { display:none; }
+  .data-chip { max-width:none; min-width:0; width:100%; background:transparent!important; border:0; border-radius:0; padding:0 1px; margin:0; gap:8px; }
+  .data-chip b { font-size:11px; font-weight:500; }
+  .data-chip small { font-size:9px; line-height:1.5; max-width:100%; }
+  .dashboard-grid { grid-template-columns:1fr; gap:14px; }
+  .primary-panel { padding:20px 17px; border-radius:21px; }
+  .primary-panel>.panel-head { padding-bottom:14px; gap:10px; align-items:start; }
+  .panel-head h2 { font-size:14px; line-height:1.4; }
+  .micro-label { font-size:10px; line-height:1.5; }
+  .confidence { font-size:9px; max-width:101px; padding:6px 8px; }
+  .primary-panel>.drive-mode-label { margin-top:15px; font-size:9px; }
+  .cockpit-strip { grid-template-columns:1.12fr 1fr; gap:12px; margin:12px 0 17px; }
+  .cockpit-strip>div { min-height:87px; padding:0; }
+  .cockpit-strip span { font-size:10px; }
+  .cockpit-strip strong b { font-size:56px; }
+  .cockpit-strip small { font-size:11px; }
+  .cockpit-strip .road-status-tile { padding:4px 0 4px 15px; }
+  .road-status-tile strong { font-size:12px; max-width:128px; margin-top:9px; }
+  .road-glyph { height:40px; width:40px; right:0; bottom:0; opacity:.7; }
+  .radar-main { grid-template-columns:minmax(0,1fr) 89px; min-height:154px; padding:17px 15px; gap:12px; border-radius:15px; margin:0; }
+  .radar-main .micro-label { font-size:10px; }
+  .big-distance { font-size:clamp(48px,14vw,68px); letter-spacing:-2.8px; margin-top:10px; }
+  .big-distance small { font-size:15px; margin-left:5px; }
+  .speed-area { min-width:0; }
+  .speed-sign { height:74px; width:74px; border-width:5px; }
   .speed-sign strong { font-size:29px; }
-  .button-row { margin-top:14px; display:grid; grid-template-columns:1fr; gap:9px; }
-  .button-row .btn { width:100%; font-size:15px; min-height:51px; }
-  #refreshBtn { min-height:42px; background:transparent; border:1px solid #343d47; color:#c5d0db; font-size:13px; }
+  .speed-sign span { font-size:8px; }
+  .primary-panel>.road-label { font-size:10px; line-height:1.6; margin-top:11px; }
+  .primary-panel>.button-row { margin-top:17px; }
+  .button-row { display:grid; grid-template-columns:1fr; gap:9px; }
+  .button-row .btn { min-height:50px; font-size:14px; width:100%; }
+  #refreshBtn { min-height:42px; font-size:12px; }
   .metrics-details .metrics { grid-template-columns:1fr 1fr; }
-  .metrics-details .metric { border-right:0; }
-  .notice { margin-top:12px; padding:12px; }
-  .side-panel { padding:15px; }
+  .metric { border:0; }
+  .notice { font-size:10px; padding:11px; }
+  .side-panel { padding:18px; }
   .side-panel h2 { font-size:15px; }
-  .workspace-head { margin:2px 1px 16px; }
-  .workspace-head h2 { font-size:27px; }
+  .equipment-body { padding-top:10px; }
+  .next-detail,.next-detail b { font-size:11px; }
+  .workspace-head { margin:0 1px 20px; }
+  .workspace-head h2 { font-size:28px; }
+  .workspace-head p { font-size:12px; }
   .workspace-head .btn { width:100%; }
-  .insights-grid { gap:12px; }
-  .insights-grid>.match-insight { padding:16px; }
+  .insights-grid { grid-template-columns:1fr; gap:15px; }
+  .health-panel,.insights-grid>.match-insight { padding:19px 17px; border-radius:20px; }
+  .health-row { padding:12px; }
+  .health-row strong { font-size:12px; }
+  .health-row small { font-size:10px; }
+  .health-status { font-size:8px; }
+  .match-insight-head { gap:10px; }
+  .match-badge { font-size:9px; }
+  .match-road { font-size:20px; }
   .match-facts { gap:8px; }
-  .match-facts>div { padding:10px; }
-  .match-facts span { font-size:10px; }
-  .match-badge { font-size:10px; }
   .stability-card { grid-template-columns:6px minmax(0,1fr); }
-  .stability-count { grid-column:2; justify-self:start; margin-top:1px; }
-  .sim-top h3 { font-size:21px; }
-  .sim-canvas { min-height:205px; }
-  .map-panel { padding:14px 12px 17px; border-radius:17px; }
-  .map-panel .map { margin-top:12px; height:calc(100dvh - 292px); min-height:320px; max-height:750px; }
+  .stability-count { grid-column:2; justify-self:start; }
+  .sim-panel { padding:19px 17px; margin-top:15px; }
+  .sim-top h3 { font-size:22px; }
+  .sim-layout { grid-template-columns:1fr; }
+  .sim-canvas { min-height:210px; }
+  .sim-buttons .btn { min-height:46px; }
+  .map-panel { padding:18px 13px; border-radius:21px; }
   .map-heading { display:block; }
-  .map-heading h2 { font-size:20px; }
-  .map-legend { margin-top:12px; font-size:10px; }
-  .map-accuracy { top:12px; left:11px; font-size:10px; padding:7px 9px; }
-  .map-actions { padding:12px 0 0; gap:9px; display:grid; grid-template-columns:1fr 1fr; }
-  .map-actions .accuracy-toggle,.map-actions .trail-toggle { flex:none; width:100%; min-width:0; font-size:11px; line-height:1.3; min-height:46px; padding:9px; }
-  .map-actions .text-action { grid-column:1/-1; min-height:38px; text-align:left; font-size:12px; }
-  .map-actions span { grid-column:1/-1; font-size:11px; }
-  .mobile-nav { left:0; right:0; bottom:0; padding:8px 10px calc(9px + env(safe-area-inset-bottom)); grid-template-columns:repeat(4,minmax(0,1fr)); }
-  .mobile-nav a { min-height:55px; font-size:11px; }
-  .mobile-nav a.active { background:#303942; }
-  .mobile-nav svg { width:20px; height:20px; }
-  .modal-overlay { padding:10px; }
-  .modal-content { max-height:92dvh; }
-  .modal-body { padding:15px; }
+  .map-heading h2 { font-size:25px; }
+  .map-heading p { font-size:11px; }
+  .map-legend { margin-top:13px; font-size:9px; gap:8px 12px; }
+  .map-panel .map { height:calc(100dvh - 295px); min-height:330px; max-height:650px; border-radius:13px; }
+  .map-actions { display:grid; grid-template-columns:1fr 1fr; padding-top:14px; gap:9px; }
+  .map-actions button { font-size:11px; line-height:1.4; }
+  .map-actions .text-action { grid-column:1/-1; text-align:left; }
+  .map-actions span { grid-column:1/-1; font-size:10px; }
+  .map-accuracy { left:12px; top:12px; font-size:9px; }
+  .map-state { font-size:10px; }
+  .map-bottom { font-size:9px; }
+  .bottom-grid { gap:15px; }
+  .nearby-panel,.source-panel { padding:19px 17px; }
+  .nearby-item { padding:14px 12px; gap:12px; }
+  .nearby-item b { font-size:12px; }
+  .nearby-item small { font-size:10px; }
+  .nearby-distance { font-size:19px; }
+  .source-panel h2 { font-size:23px; }
+  .mobile-nav { left:0; right:0; bottom:0; padding:9px 12px calc(10px + env(safe-area-inset-bottom)); grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+  .mobile-nav a { min-height:55px; gap:6px; font-size:10px; }
+  .mobile-nav svg { width:21px; height:21px; }
+  .modal-overlay { padding:10px; align-items:center; }
+  .modal-content { border-radius:22px; max-height:calc(100dvh - 24px); border-bottom:1px solid #3e4856; }
+  .modal-header { padding:17px; }
+  .modal-header h3 { font-size:17px; }
+  .modal-body { padding:17px; }
+  .modal-footer { padding:15px 17px; }
+  .modal-footer .btn { flex:1; }
   .select-row { display:block; }
-  .select-row select { width:100%; margin-top:5px; font-size:13px; }
-  .diag-table td { font-size:11px; }
+  .select-row select { width:100%; max-width:none; margin-top:7px; font-size:13px; }
+  .select-row label { display:block; }
+  .settings-group { padding:16px; }
+  .diag-table td { font-size:10px; padding:10px 6px; }
   .diag-log-box { font-size:10px; }
-  footer { font-size:10px; line-height:1.5; }
+  footer { font-size:9px; }
+  body.driving-mode .primary-panel>.metrics-details { display:none; }
+  body.driving-mode .primary-panel>.road-label { font-size:10px; }
+  body.driving-mode .big-distance { font-size:clamp(50px,15vw,72px); }
+  body.driving-mode .cockpit-strip strong b { font-size:64px; }
 }
 @media(max-width:370px) {
-  .app-shell { padding-left:10px; padding-right:10px; }
-  .brand strong { font-size:16px; }
-  .top-actions { grid-template-columns:repeat(2,36px); }
-  #diagBtn,#settingsBtn { width:36px; height:38px; }
-  .cockpit-strip strong b { font-size:34px; }
-  .speed-sign { width:64px; height:64px; }
-  .speed-area { min-width:67px; }
-  .big-distance { font-size:42px; }
+  .app-shell { padding-inline:12px; }
+  .brand strong { font-size:17px; }
+  .brand-mark { height:36px; width:36px; }
+  .primary-panel { padding:17px 13px; }
+  .radar-main { padding:16px 12px; grid-template-columns:minmax(0,1fr) 78px; gap:9px; }
+  .speed-sign { width:68px; height:68px; }
+  .big-distance { font-size:47px; }
+  .confidence { max-width:94px; }
+  .road-status-tile strong { font-size:11px; }
+  .cockpit-strip strong b { font-size:51px; }
 }
-@media(prefers-reduced-motion:reduce) { * { scroll-behavior:auto !important; } }
+@media(prefers-reduced-motion:reduce) {
+  * { scroll-behavior:auto!important; animation:none!important; transition:none!important; }
+}
 
-#refreshBtn { background:#252b33; border-color:#3b4550; color:#c8d2de; }
+/* Esquema 2D: carro fixo; a posição do radar deriva somente da distância recebida. */
+.primary-panel>.proximity-card { order:5; margin-top:13px; }
+.proximity-card { border:1px solid #364150; border-radius:15px; background:#181c22; overflow:hidden; }
+.proximity-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px 12px; padding:13px 15px 0; }
+.proximity-heading h3 { margin:0; font-size:12px; font-weight:600; color:#d9dfe8; letter-spacing:0; }
+.proximity-heading>span { font-size:10px; color:#e6c68d; }
+.proximity-card[data-state="route"] .proximity-heading>span { color:#afbcce; }
+.proximity-scene { position:relative; height:151px; margin:0 10px; }
+.proximity-verge { position:absolute; left:0; right:0; top:63px; height:71px; border-radius:13px; background:#212935; }
+.proximity-road { position:absolute; left:0; right:0; top:73px; height:49px; border-block:2px solid #5a6678; background:#2d3239; overflow:hidden; }
+.proximity-road:before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,#181c2288,transparent 15%,transparent 85%,#181c2288); }
+.proximity-road>span { position:absolute; left:0; right:0; top:22px; height:2px; background:repeating-linear-gradient(90deg,#a6b3c5 0 17px,transparent 17px 33px); opacity:.55; }
+.proximity-car { position:absolute; left:14%; top:108px; transform:translate(-50%,-50%); width:52px; height:30px; z-index:2; }
+.proximity-car svg { display:block; width:100%; height:100%; }
+.proximity-radar { position:absolute; left:89%; top:34px; transform:translateX(-50%); width:36px; height:48px; z-index:3; transition:left .65s ease-out; }
+.proximity-radar[hidden] { display:none!important; }
+.proximity-radar svg { display:block; width:36px; height:48px; filter:drop-shadow(0 2px 2px #0004); }
+.proximity-distance { position:absolute; left:50%; bottom:calc(100% + 4px); transform:translateX(-50%); white-space:nowrap; padding:3px 7px; background:#493d26; border:1px solid #72603e; border-radius:6px; color:#ffe3b0; font-size:11px; line-height:1.25; font-weight:650; font-variant-numeric:tabular-nums; }
+.proximity-scale { position:absolute; top:135px; left:14%; right:11%; display:flex; justify-content:space-between; font-size:9px; color:#a0adbe; }
+.proximity-scale>span { position:relative; width:0; white-space:nowrap; text-align:center; }
+.proximity-scale>span:first-child { transform:translateX(-24px); }
+.proximity-scale>span:nth-child(2) { transform:translateX(-15px); }
+.proximity-scale>span:last-child { transform:translateX(-14px); }
+.proximity-caption { margin:0; padding:7px 15px 12px; color:#a1adbe; font-size:10px; line-height:1.5; }
+.proximity-card[data-state="idle"] .proximity-car,.proximity-card[data-state="idle"] .proximity-road { opacity:.5; }
+.proximity-card[data-state="idle"] .proximity-heading>span { color:#9ca7b7; }
+@media(max-width:370px) { .proximity-heading { padding-inline:12px; } .proximity-heading h3 { font-size:11px; } .proximity-heading>span { font-size:9px; } .proximity-caption { padding-inline:12px; font-size:9px; } }
+@media(prefers-reduced-motion:reduce) { .proximity-radar { transition:none!important; } }
+
+/* Horizonte: instrumentos claros, cenário 2D e navegação discreta. */
+:root { --bg:#101827; --panel:#182334; --soft:#223148; --line:#34445b; --muted:#a6b5c8; --accent:#ffb26b; --blue:#9cc4ff; --green:#7ed9be; }
+html { background:var(--bg); }
+body { background:radial-gradient(ellipse at 85% 0,#25395755,transparent 45%),var(--bg); color:#edf3fb; }
+.app-shell { max-width:1280px; padding:28px 38px 40px; }
+.topbar { margin-bottom:34px; border-color:#2b394e; padding-bottom:22px; }
+.brand-mark { background:#ffb26b; border-radius:15px 15px 15px 5px; }
+.brand-mark svg { stroke:#16253b; }
+.brand strong { font-weight:700; letter-spacing:-.65px; }
+.brand small { color:#9eafc4; letter-spacing:.06em; }
+.icon-btn { background:#1c293c; border-color:#35445b; color:#d2dfef; border-radius:50%; }
+.icon-btn:hover { background:#2b3d55; }
+.desktop-nav { background:#111b2b; border-color:#304057; border-radius:99px; padding:5px; }
+.desktop-nav a { border-radius:99px; padding:10px 18px; color:#a8b8ce; }
+.desktop-nav a.active { background:#e4edf8; color:#17253b; }
+.pill.on { color:#9fe4cc; border-color:#3a5e59; background:#223d3a; }
+.pill.on i,.data-dot.online { background:#8edbbb; }
+.home-intro { margin:0 0 24px; align-items:end; }
+#roadNameTag { color:#ffbb7c; letter-spacing:.17em; font-size:10px; }
+.live-mark { width:17px; height:2px; border-radius:0; background:#ffb26b; }
+.intro-row h1 { font-size:clamp(27px,3vw,39px); font-weight:600; letter-spacing:-1.5px; }
+.intro-copy { margin:9px 0 0; color:#a3b2c6; }
+.data-chip { background:transparent!important; border:0; border-left:1px solid #3a4b62; border-radius:0; padding:8px 0 8px 20px; min-width:220px; }
+.data-chip b { color:#d7e3f1; font-size:12px; font-weight:500; }
+.data-chip small { color:#9dacc0; font-size:10px; }
+.dashboard-grid { grid-template-columns:minmax(0,1fr) 300px; gap:22px; }
+.panel,.match-insight,.health-panel,.sim-panel,.source-panel,.map-panel { border:1px solid #324158; border-radius:24px; background:#182334; box-shadow:0 12px 35px #04091324; }
+.primary-panel { padding:24px; }
+.primary-panel>.panel-head { order:1; margin:0; border:0; padding:0 2px 19px; align-items:center; }
+.panel-head h2 { color:#f0f5fc; font-size:17px; font-weight:600; }
+.micro-label { color:#aabbd0; }
+.confidence { border-radius:99px; font-size:10px; padding:8px 12px; }
+.confidence.neutral { background:#2a384d; color:#cedbef; }
+.confidence.warn { background:#473a2e; color:#ffcc9d; }
+.confidence.good { background:#24483f; color:#b1efdb; }
+.primary-panel>.radar-main { order:2; }
+.radar-main { background:#f3f6fa; border:0; border-radius:18px 18px 0 0; padding:25px 28px 12px; grid-template-columns:minmax(0,1fr) 110px; gap:20px; min-height:162px; }
+.radar-main .micro-label { color:#52647a; font-size:12px; font-weight:500; }
+.big-distance { color:#162a46; font-size:90px; font-weight:650; letter-spacing:-5px; margin-top:4px; }
+.big-distance small { color:#546a83; font-size:23px; font-weight:500; }
+.speed-area { text-align:center; }
+.speed-area>.micro-label { font-size:10px; max-width:100px; margin:auto; }
+.speed-sign { width:80px; height:80px; border:5px solid #ec705f; background:#fff; box-shadow:0 4px 10px #1834520d; margin-top:8px; color:#182c47; }
+.speed-sign strong { font-size:32px; font-weight:750; }
+.primary-panel>.proximity-card { order:3; margin:0; }
+.proximity-card { background:#f3f6fa; border:0; border-radius:0 0 18px 18px; padding:7px 13px 0; position:relative; }
+.proximity-heading { padding:10px 13px 4px; border-top:1px solid #d4dee9; margin:0 3px; align-items:center; }
+.proximity-heading h3 { font-size:11px; color:#344b65; font-weight:600; }
+.proximity-heading>span { color:#7b502a; font-size:9px; }
+.proximity-card[data-state="route"] .proximity-heading>span { color:#236e5f; }
+.proximity-card[data-state="idle"] .proximity-heading>span { color:#61738b; }
+.proximity-scene { height:145px; margin:0 0; border-radius:10px; overflow:hidden; }
+.proximity-town { position:absolute; left:0; top:0; width:100%; height:67px; opacity:.72; }
+.proximity-verge { top:57px; height:67px; border-radius:10px; background:#dce6e6; }
+.proximity-road { top:65px; height:48px; background:#667b8b; border-block:3px solid #afbec7; }
+.proximity-road:before { background:linear-gradient(90deg,#5e728433,transparent 20%,transparent 85%,#5e728433); }
+.proximity-road>span { top:20px; background:repeating-linear-gradient(90deg,#e6edf3 0 18px,transparent 18px 35px); opacity:.6; }
+.proximity-car { top:99px; width:60px; height:34px; filter:drop-shadow(0 3px 2px #17304955); }
+.proximity-radar { top:29px; }
+.proximity-distance { color:#53351e; background:#ffcf9b; border:1px solid #d9a570; font-weight:750; border-radius:7px; padding:3px 7px; font-size:10px; }
+.proximity-scale { top:128px; color:#52687d; font-size:9px; }
+.proximity-caption { color:#52677e; padding:0 13px 12px; font-size:10px; line-height:1.4; }
+.proximity-card[data-state="idle"] .proximity-road { opacity:1; }
+.proximity-card[data-state="idle"] .proximity-car { opacity:.6; }
+.primary-panel>.drive-mode-label { order:4; margin:16px 2px 0; color:#99adc8; font-size:9px; letter-spacing:.09em; }
+.drive-mode-label:before { background:#8fb7eb; }
+.primary-panel>.cockpit-strip { order:5; }
+.cockpit-strip { grid-template-columns:1fr 1fr; gap:12px; margin:9px 0 0; }
+.cockpit-strip>div { min-height:79px; padding:12px 16px; border:1px solid #35455e; border-radius:13px; background:#1f2d42; }
+.cockpit-strip span { color:#a9bbd2; font-size:10px; }
+.cockpit-strip strong { margin:3px 0 0; }
+.cockpit-strip strong b { font-size:34px; letter-spacing:-1px; font-weight:600; color:#f0f5ff; }
+.cockpit-strip small { color:#9cb0cc; font-size:11px; }
+.cockpit-strip .road-status-tile { border:1px solid #35455e; padding:12px 16px; }
+.road-status-tile strong { font-size:13px; color:#e0eafb; line-height:1.3; max-width:none; padding-right:25px; margin-top:8px; }
+.road-glyph { width:29px; height:29px; right:12px; bottom:12px; stroke:#5a769b; opacity:.7; }
+.primary-panel>.button-row { order:6; margin-top:16px; }
+.button-row { grid-template-columns:minmax(0,1fr) 48px; gap:9px; }
+.btn { border-radius:12px; min-height:48px; font-weight:600; }
+.btn-primary { background:#ffb26b; border-color:#ffb26b; color:#292219; }
+.btn-primary:hover { background:#ffc68e; border-color:#ffc68e; }
+.btn-secondary,#refreshBtn { background:#24344b; color:#dbe7f9; border-color:#405574; }
+.btn-secondary:hover,#refreshBtn:hover { background:#304664; }
+.btn-danger { background:#e5edf7; color:#24374e; border-color:#e5edf7; }
+.btn-danger:hover { background:#fff; }
+.button-row #refreshBtn { font-size:0; min-height:48px; padding:0; background:#24344b; border-color:#405574; }
+.button-row #refreshBtn>span { font-size:24px; line-height:1; }
+.primary-panel>.road-label { order:7; color:#b5c2d4; font-size:11px; line-height:1.6; margin:14px 2px 0; padding-left:12px; border-left:2px solid #b58458; }
+.primary-panel>.metrics-details { order:8; margin-top:15px; border-color:#35455c; }
+.primary-panel>.notice { order:9; background:#223148; color:#bac9df; }
+.notice-icon { background:#3b506f; color:#dae7fa; }
+.primary-panel>.gps-error { order:10; }
+.side-panel { border-top:3px solid #eeb078; padding:23px; }
+.side-panel .panel-head { align-items:start; }
+.side-panel h2 { font-size:21px; letter-spacing:-.6px; line-height:1.25; margin-top:9px; }
+.next-detail { border-color:#35455c; color:#a7b7cd; padding:16px 0; }
+.next-detail b { color:#e4edf9; }
+.disclaimer { border-color:#9d724c; color:#acbbce; }
+.disclaimer strong { color:#e7d3c0; }
+.equipment-toggle { background:#2b3c55; color:#dae6f9; border-color:#465e80; }
+.health-good .health-dot { background:#8edbbb; }.health-good .health-status { color:#8edbbb; }
+.health-warn .health-status { color:#ffc28b; }
+.match-badge.confirmed { color:#a1e4cb; background:#244a40; }
+.stability-icon { background:#8fb7eb; }
+.nearby-item { border:0; border-bottom:1px solid #394961; border-radius:0; background:transparent; padding:18px 0; margin:0; }
+.nearby-item:first-child { border-top:1px solid #394961; }
+.nearby-distance { color:#ffc08a; font-size:24px; font-weight:600; }
+.nearby-item b { font-weight:500; }
+.nearby-item small { color:#a5b6ce; }
+.nearby-list { margin-top:20px; }
+.source-panel { background:#213149; border-color:#425876; }
+.source-stats b { color:#ffca9b; }
+.map-panel .map { border-color:#4f6480; background:#25364c; }
+.map-tool,.map-state,.map-accuracy { background:#16253ceb; color:#e7effb; border-color:#5e7595; }
+.trail-toggle[aria-pressed="true"] { background:#354f70; border-color:#92b1da; }
+.modal-content { background:#1b293e; border-color:#4c6384; }
+.modal-header,.modal-footer { background:#23344e; }
+.close-btn { background:#354d70; }
+.settings-group { background:#22334d; border-color:#435b7e; }
+.settings-group h4 { color:#ffcc9b; }
+input[type="range"] { accent-color:#ffb26b; }
+.mobile-nav { background:#101b2af2; border:1px solid #3b4e68; box-shadow:0 12px 30px #03091466; backdrop-filter:blur(16px); }
+.mobile-nav a { color:#acbdd3; border-radius:13px; }
+.mobile-nav a.active { background:#f1c49b; color:#2a2d34; }
+.mobile-nav a.active svg { stroke:#2a2d34; }
+.mobile-nav a:not(.active) svg { stroke:#a9bdd7; }
+.contrast-high .panel,.contrast-high .radar-main,.contrast-high .health-row { border:1px solid #acc6ee!important; }
+.contrast-high .radar-main .micro-label { color:#31435d!important; }
+.contrast-high .proximity-caption { color:#31435d; }
+@media(min-width:1100px) {
+  .primary-panel { padding:26px; }
+  .radar-main { min-height:178px; }
+  .big-distance { font-size:100px; }
+  .proximity-car { width:66px; height:37px; }
+  .proximity-scene { height:155px; }
+  .proximity-town { height:77px; }
+  .proximity-verge { top:67px; }.proximity-road { top:75px; }.proximity-car { top:109px; }.proximity-radar { top:39px; }.proximity-scale { top:138px; }
+}
+@media(max-width:820px) {
+  .app-shell { padding:16px 15px calc(105px + env(safe-area-inset-bottom)); }
+  .topbar { min-height:48px; margin-bottom:22px; padding:0; border:0; gap:10px; }
+  .brand { gap:9px; }.brand-mark { width:38px; height:38px; border-radius:12px 12px 12px 4px; }
+  .brand strong { font-size:18px; }.brand small { font-size:8px; letter-spacing:.04em; }
+  .top-actions { display:flex; gap:7px; position:relative; }
+  #gpsStatus { position:absolute; top:51px; right:0; font-size:9px; padding:0; white-space:nowrap; }
+  #diagBtn,#settingsBtn { width:40px; height:40px; min-height:40px; padding:10px; }
+  #installBtn:not(.hidden) { position:absolute; top:74px; right:0; min-height:34px; z-index:2; }
+  .home-intro { gap:9px; margin-bottom:15px; }
+  #roadNameTag { font-size:8px; letter-spacing:.15em; max-width:calc(100% - 100px); }
+  .intro-row h1 { font-size:24px; margin-top:9px; letter-spacing:-.8px; line-height:1.2; }
+  .data-chip { border:0; padding:0; min-width:0; gap:6px; }
+  .data-chip b { font-size:10px; }.data-chip small { font-size:8px; margin-top:2px; }
+  .data-chip>.data-dot { width:5px; height:5px; }
+  .dashboard-grid { grid-template-columns:1fr; gap:14px; }
+  .primary-panel { padding:15px; border-radius:22px; }
+  .primary-panel>.panel-head { padding:0 0 13px; gap:9px; }
+  .panel-head h2 { font-size:13px; margin-top:4px; }
+  .panel-head .micro-label { font-size:9px; }
+  .confidence { font-size:8px; max-width:100px; padding:6px 9px; }
+  .radar-main { min-height:129px; padding:17px 18px 8px; gap:10px; grid-template-columns:minmax(0,1fr) 80px; border-radius:15px 15px 0 0; }
+  .radar-main .micro-label { font-size:10px; line-height:1.4; }
+  .big-distance { font-size:clamp(55px,16vw,74px); letter-spacing:-3.7px; margin-top:5px; }
+  .big-distance small { font-size:17px; margin-left:5px; }
+  .speed-area>.micro-label { font-size:8px; }
+  .speed-sign { width:64px; height:64px; border-width:4px; margin-top:7px; }.speed-sign strong { font-size:26px; }.speed-sign span { font-size:7px; }
+  .proximity-card { padding:3px 6px 0; border-radius:0 0 15px 15px; }
+  .proximity-heading { padding:9px 9px 4px; gap:4px; }.proximity-heading h3 { font-size:10px; }.proximity-heading>span { font-size:8px; }
+  .proximity-scene { height:131px; }
+  .proximity-town { height:56px; }.proximity-verge { top:48px; height:64px; }.proximity-road { top:56px; height:44px; }.proximity-road>span { top:18px; }
+  .proximity-car { top:87px; width:51px; height:29px; }.proximity-radar { top:20px; }.proximity-scale { top:115px; font-size:8px; }
+  .proximity-distance { font-size:9px; padding:2px 6px; bottom:calc(100% + 2px); }
+  .proximity-caption { font-size:9px; padding:0 9px 10px; }
+  .primary-panel>.drive-mode-label { margin-top:12px; font-size:8px; }
+  .cockpit-strip { gap:8px; margin-top:7px; }.cockpit-strip>div { min-height:67px; padding:9px 12px; border-radius:11px; }
+  .cockpit-strip span { font-size:9px; }.cockpit-strip strong b { font-size:29px; }.cockpit-strip small { font-size:10px; }
+  .cockpit-strip .road-status-tile { padding:9px 12px; }.road-status-tile strong { font-size:11px; margin-top:7px; padding-right:19px; }
+  .road-glyph { width:23px; height:23px; right:8px; bottom:9px; }
+  .primary-panel>.button-row { margin-top:12px; }.button-row { grid-template-columns:minmax(0,1fr) 48px; gap:8px; }
+  .button-row .btn { min-height:48px; font-size:12px; padding:11px 8px; }
+  .primary-panel>.road-label { font-size:10px; margin-top:13px; }
+  .primary-panel>.metrics-details { margin-top:10px; }.metrics-details>summary { padding:11px 0; min-height:42px; font-size:11px; }
+  .notice { font-size:10px; padding:10px; }
+  .side-panel { padding:18px; border-top-width:1px; }.side-panel h2 { font-size:16px; }
+  .workspace-head h2,.map-heading h2 { font-size:28px; letter-spacing:-1px; }
+  .mobile-nav { left:12px; right:12px; bottom:calc(9px + env(safe-area-inset-bottom)); border-radius:20px; padding:6px; gap:3px; }
+  .mobile-nav a { min-height:54px; gap:5px; font-size:9px; }.mobile-nav svg { width:20px; height:20px; }
+  .nearby-distance { font-size:21px; }
+  body.driving-mode .big-distance { font-size:clamp(59px,18vw,80px); }
+  body.driving-mode .cockpit-strip strong b { font-size:36px; }
+  body.driving-mode .topbar { margin-bottom:18px; }
+  body.driving-mode #gpsStatus { position:static; font-size:0; }
+}
+@media(max-width:370px) {
+  .app-shell { padding-inline:11px; }.primary-panel { padding:12px; }
+  .intro-row h1 { font-size:22px; }.brand strong { font-size:17px; }
+  .radar-main { padding-inline:13px; grid-template-columns:minmax(0,1fr) 73px; }.big-distance { font-size:54px; }
+  .speed-sign { width:60px; height:60px; }
+  .proximity-heading { padding-inline:5px; }.proximity-heading h3 { font-size:9px; }.proximity-heading>span { font-size:7px; }
+  .cockpit-strip>div,.cockpit-strip .road-status-tile { padding-inline:9px; }.road-status-tile strong { font-size:10px; }
+}
+
+/* Refinamento: leitura em um olhar, estados explícitos e ilustração medida. */
+.primary-panel[data-display="route"] .radar-main { background:#eef7f3; }
+.primary-panel[data-display="route"] .proximity-card { background:#eef7f3; }
+.primary-panel[data-display="route"] .big-distance { color:#174d43; }
+.primary-panel[data-display="stale"] .confidence,.primary-panel[data-display="waiting"] .confidence { color:#ffd4ac; background:#514032; }
+.primary-panel[data-display="idle"] .big-distance,.primary-panel[data-display="waiting"] .big-distance { color:#8090a5; }
+.primary-panel[data-display="idle"] .speed-sign,.primary-panel[data-display="waiting"] .speed-sign,.primary-panel[data-display="stale"] .speed-sign { border-color:#aebccb; color:#6f8095; }
+.primary-panel[data-display="idle"] .proximity-town { opacity:.4; }
+.proximity-range-track { position:absolute; left:14%; right:11%; top:122px; height:2px; background:#c8d5e0; }
+.proximity-range-track:before { content:''; position:absolute; left:0; top:-2px; width:6px; height:6px; background:#3c607a; border-radius:50%; }
+.proximity-range-track>span { display:block; height:100%; background:#b46b35; width:0; position:relative; transition:width .65s ease-out; }
+.proximity-range-track>span[hidden] { display:none; }
+.proximity-range-track>span:after { content:''; position:absolute; right:-2px; top:-2px; width:6px; height:6px; border-radius:50%; background:#b46b35; }
+.proximity-card[data-state="route"] .proximity-range-track>span,.proximity-card[data-state="route"] .proximity-range-track>span:after { background:#267c69; }
+.proximity-scale { top:131px; }
+.proximity-scene { height:149px; }
+.nearby-item { grid-template-columns:48px minmax(0,1fr) auto; gap:14px; align-items:center; }
+.nearby-limit { width:45px; height:45px; border:3px solid #ed9c7c; background:#f0f4fa; color:#1b304b; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; flex:none; }
+.nearby-limit strong { font-size:18px; letter-spacing:-.7px; line-height:1; font-weight:750; }
+.nearby-limit span { font-size:6px; font-weight:700; line-height:1.5; }
+.nearby-item:first-child .nearby-distance { color:#ffd1a9; }
+.nearby-item b { font-size:14px; font-weight:600; }.nearby-item small { font-size:11px; line-height:1.55; }
+.nearby-distance { font-size:23px; font-variant-numeric:tabular-nums; }
+.empty-list { position:relative; padding:60px 22px 28px; background:#1c2a3e; border:1px dashed #5a7192; }
+.empty-list:before { content:''; position:absolute; top:23px; left:calc(50% - 13px); width:26px; height:18px; border:2px solid #90a9cb; border-radius:6px; background:radial-gradient(circle at 68% 50%,transparent 0 3px,#90a9cb 3px 5px,transparent 5px); }
+.settings-group { border:0; border-bottom:1px solid #435979; border-radius:0; background:transparent; padding:20px 0; margin:0; }
+.settings-group:first-child { padding-top:0; }.settings-group:last-child { border:0; padding-bottom:0; }
+.settings-group h4 { display:flex; align-items:center; gap:11px; color:#f0f3f8; font-size:15px; font-weight:600; margin:0 0 17px; letter-spacing:-.15px; }
+.setting-index { color:#e8b88c; border:1px solid #6e604f; border-radius:7px; background:#3c3833; padding:5px 7px; font:600 10px ui-monospace,monospace; }
+.switch-row { gap:16px; min-height:59px; }.switch-row b { font-size:13px; }.switch-row small { font-size:11px; color:#abbfd8; }
+.switch-row i { width:40px; height:24px; border-radius:99px; background:#52647f; flex:none; }
+.switch-row i:after { width:18px; height:18px; top:3px; left:3px; background:#dce5f3; }
+.switch-row input:checked+i { background:#efb980; }.switch-row input:checked+i:after { transform:translateX(16px); background:#24354b; }
+.select-row { padding-block:6px; }.select-row label,.slider-row label { color:#c6d5e8; }
+.modal-header h3 { font-size:22px; letter-spacing:-.6px; }
+.modal-body { padding:24px; }.modal-footer .btn-primary { min-width:160px; }
+.contrast-high .radar-main,.contrast-high .proximity-card { background:#101722!important; }
+.contrast-high .big-distance { color:#f3f7ff!important; }.contrast-high .big-distance small,.contrast-high .radar-main .micro-label { color:#cdddf3!important; }
+.contrast-high .proximity-heading h3,.contrast-high .proximity-caption,.contrast-high .proximity-scale { color:#d1e1f4; }
+.contrast-high .proximity-heading { border-color:#536780; }
+.contrast-high .proximity-heading>span,.contrast-high .proximity-card[data-state="idle"] .proximity-heading>span { color:#ffd1a9; }
+.contrast-high .proximity-card[data-state="route"] .proximity-heading>span { color:#a8e4cf; }
+.contrast-high .proximity-town { opacity:.25; }
+.contrast-high .proximity-verge { background:#283b4b; }.contrast-high .proximity-road { background:#41576c; border-color:#6c849d; }
+@media(min-width:1100px) { .proximity-range-track { top:132px; }.proximity-scale { top:141px; }.proximity-scene { height:159px; } }
+@media(max-width:820px) {
+  .home-intro { align-items:stretch; }
+  .home-intro>div:first-child { width:100%; }
+  .intro-row h1 { font-size:28px; letter-spacing:-1px; }
+  .data-chip b { font-size:11px; }.data-chip small { font-size:9px; }
+  .topbar { min-height:49px; }.brand-mark { width:40px; height:40px; }
+  #diagBtn,#settingsBtn { width:44px; height:44px; min-height:44px; }
+  .panel-head h2 { font-size:14px; }
+  .confidence { font-size:9px; max-width:102px; }
+  .proximity-range-track { top:109px; }.proximity-scale { top:118px; }.proximity-scene { height:137px; }
+  .cockpit-strip span { font-size:10px; }.road-status-tile strong { font-size:12px; }
+  .mobile-nav a { font-size:10px; min-height:55px; }
+  .nearby-item { grid-template-columns:44px minmax(0,1fr) auto; gap:10px; padding:17px 0; }
+  .nearby-limit { width:42px; height:42px; }.nearby-limit strong { font-size:17px; }
+  .nearby-item b { font-size:13px; }.nearby-item small { font-size:10px; }.nearby-distance { font-size:20px; }
+  .modal-body { padding:21px; }.modal-header h3 { font-size:21px; }
+  .settings-group { padding:18px 0; }.settings-group h4 { font-size:14px; margin-bottom:14px; }
+  .select-row { padding-block:7px; }
+}
+@media(max-width:370px) {
+  .intro-row h1 { font-size:25px; }.confidence { max-width:92px; font-size:8px; }.panel-head h2 { font-size:12px; }
+  .nearby-item { grid-template-columns:39px minmax(0,1fr) auto; gap:8px; }.nearby-limit { width:38px; height:38px; }.nearby-distance { font-size:18px; }
+  .road-status-tile strong { font-size:10px; }.modal-body { padding:17px; }
+}

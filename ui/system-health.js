@@ -1,13 +1,13 @@
 /** Sem percentuais artificiais: condições factuais e independentes. */
 export function deriveSystemHealth({ tracking = false, native = false, nativeServiceActive = false,
   hasPosition = false, fixAgeMs = null, gpsIssue = null, activeRadars = 0,
-  datasetSavedAt = null, roadCovered = false, roadSegments = 0, routeReady = false, online = true } = {}) {
-  const fixFresh = tracking && hasPosition && !gpsIssue && Number.isFinite(fixAgeMs) && fixAgeMs <= 90000;
+  datasetSavedAt = null, datasetPersisted = Boolean(datasetSavedAt), roadCovered = false, roadSegments = 0, routeReady = false, online = true } = {}) {
+  const fixFresh = tracking && hasPosition && !gpsIssue && Number.isFinite(fixAgeMs) && fixAgeMs >= 0 && fixAgeMs <= 90000;
   const checks = [
     { id: 'gps', title: 'Localização GPS', status: !tracking ? 'idle' : fixFresh ? 'good' : 'warn',
       detail: !tracking ? 'Monitoramento desligado' : gpsIssue ? 'Último ponto recusado' : fixFresh ? 'Posição recente e válida' : 'Aguardando posição válida' },
     { id: 'dataset', title: 'Base de radares', status: activeRadars > 0 ? 'good' : 'warn',
-      detail: activeRadars > 0 ? `${activeRadars.toLocaleString('pt-BR')} registros ativos${datasetSavedAt ? ' · cópia local disponível' : ''}` : 'Base ainda indisponível' },
+      detail: activeRadars > 0 ? `${activeRadars.toLocaleString('pt-BR')} registros ativos${datasetPersisted ? ' · cópia local disponível' : ' · sem cópia offline confirmada'}` : 'Base ainda indisponível' },
     { id: 'osm', title: 'Cobertura de ruas', status: roadCovered && roadSegments > 0 ? 'good' : 'warn',
       detail: roadCovered && roadSegments > 0 ? `${roadSegments.toLocaleString('pt-BR')} segmentos carregados` : 'Sem malha confirmada nesta posição' },
     { id: 'route', title: 'Alertas por rota', status: routeReady && fixFresh && roadCovered ? 'good' : 'warn',

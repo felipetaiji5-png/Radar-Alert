@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#101317" />
-  <meta name="description" content="Radar Alert — protótipo web de alertas informativos de radares em São Paulo." />
+  <meta name="theme-color" content="#101827" />
+  <meta name="description" content="Radar Alert — radares próximos, distância e acompanhamento de viagem em São Paulo." />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://tile.openstreetmap.org" />
@@ -19,7 +19,7 @@
         <span class="brand-mark">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19a8 8 0 0 1 16 0M7 19a5 5 0 0 1 10 0M10 19a2 2 0 0 1 4 0M12 4v3m7 0-2 2M5 7l2 2"/></svg>
         </span>
-        <span><strong>Radar Alert</strong><small>São Paulo · v0.15.1</small></span>
+        <span><strong>Radar Alert</strong><small>São Paulo · v0.17.2</small></span>
       </a>
       <nav class="desktop-nav" aria-label="Seções do aplicativo">
         <a href="#painel" data-screen-link="painel">Painel</a>
@@ -43,9 +43,9 @@
     <main id="painel">
       <section class="intro-row home-intro">
         <div>
-          <div class="eyebrow" id="roadNameTag">Sua viagem</div>
+          <div class="eyebrow" id="roadNameTag"><span class="live-mark" aria-hidden="true"></span> OLHE ADIANTE</div>
           <h1 id="radarHeadline">Aguardando GPS</h1>
-          <p class="intro-copy">Avisos apenas quando a via e o sentido estiverem confirmados.</p>
+          <p class="intro-copy">Mais clareza para cada quilômetro.</p>
         </div>
         <div class="data-chip">
           <span class="data-dot" id="networkDot"></span>
@@ -57,7 +57,7 @@
       </section>
 
       <section class="dashboard-grid" data-screen="painel">
-        <article class="panel primary-panel">
+        <article class="panel primary-panel" id="drivePanel" data-display="idle">
           <div class="panel-head">
             <div>
               <div class="micro-label" id="matchedRoadLabel">Via não identificada</div>
@@ -69,19 +69,48 @@
           <div class="drive-mode-label" id="driveModeLabel">Painel de direção</div>
           <div class="cockpit-strip">
             <div><span>Velocidade atual</span><strong><b id="cockpitSpeed">—</b><small>km/h</small></strong></div>
-            <div><span>Via detectada</span><strong id="cockpitRoadState">AGUARDANDO</strong></div>
+            <div class="road-status-tile"><svg viewBox="0 0 48 48" class="road-glyph" aria-hidden="true"><path d="M13 5 5 43M35 5l8 38M24 5v7m0 8v8m0 8v7"/></svg><span>Identificação da via</span><strong id="cockpitRoadState">AGUARDANDO</strong></div>
           </div>
           <div class="radar-main">
             <div class="distance-area">
               <div class="micro-label" id="distanceTypeLabel">Próximo radar · distância aproximada</div>
               <div class="big-distance" id="distanceValue">—<small>m</small></div>
-              <div class="road-label" id="roadLabel">Ative o GPS para estimar a proximidade de equipamentos cadastrados.</div>
+
             </div>
             <div class="speed-area">
-              <div class="micro-label">Limite cadastrado</div>
+              <div class="micro-label">Limite cadastrado do radar</div>
               <div class="speed-sign"><strong id="speedLimit">—</strong><span>km/h</span></div>
             </div>
           </div>
+
+          <section class="proximity-card" id="radarProximity" data-state="idle" aria-labelledby="proximityTitle">
+            <div class="proximity-heading">
+              <h3 id="proximityTitle">No seu horizonte</h3>
+              <span id="proximityMode">Sem radar selecionado</span>
+            </div>
+            <div class="proximity-scene" id="proximityScene" role="img" aria-label="Carro em uma rua ilustrativa. Aguardando GPS.">
+              <svg class="proximity-town" viewBox="0 0 600 76" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+                <g fill="none" stroke="#b9cbd4" stroke-width="1"><path d="M0 59h600M0 30h600M52 0v76m100-76v76m110-76v76m123-76v76m105-76v76" opacity=".35"/></g>
+                <g fill="#d6e1e5"><rect x="28" y="22" width="54" height="37" rx="5"/><rect x="205" y="12" width="35" height="47" rx="5"/><rect x="394" y="25" width="62" height="34" rx="5"/><rect x="524" y="6" width="46" height="53" rx="5"/></g>
+                <g fill="#b9cbd4"><path d="M37 31h10v8H37zm17 0h10v8H54zm157-10h8v9h-8zm14 0h8v9h-8zm180 12h12v8h-12zm20 0h12v8h-12zm109-18h9v9h-9zm15 0h9v9h-9z"/></g>
+                <g stroke="#9fb5ac" stroke-width="2"><path d="M126 43v16m192-22v22m175-16v16"/></g><g fill="#afc5b6"><circle cx="126" cy="35" r="12"/><circle cx="318" cy="29" r="15"/><circle cx="493" cy="36" r="10"/></g>
+              </svg>
+              <div class="proximity-verge" aria-hidden="true"></div>
+              <div class="proximity-road" aria-hidden="true"><span></span></div>
+              <div class="proximity-car" aria-hidden="true">
+                <svg viewBox="0 0 64 36"><ellipse cx="32" cy="31" rx="27" ry="3" fill="#0004"/><rect x="11" y="2" width="10" height="7" rx="2" fill="#101711"/><rect x="43" y="2" width="10" height="7" rx="2" fill="#101711"/><rect x="11" y="27" width="10" height="7" rx="2" fill="#101711"/><rect x="43" y="27" width="10" height="7" rx="2" fill="#101711"/><path d="M7 7Q3 7 3 12v12q0 5 5 5h43q10 0 10-9v-4q0-9-10-9Z" fill="#f7f9fc" stroke="#ffffff" stroke-width="1.5"/><path d="m22 10-5 4v8l5 4h18l7-5v-6l-7-5Z" fill="#244366"/><path d="M39 11v14m-17-14v14" fill="none" stroke="#a8c6e4" stroke-width="2"/><path d="M56 10v5m0 6v5" stroke="#fff7cf" stroke-width="3" stroke-linecap="round"/><path d="M6 12v4m0 5v4" stroke="#ea8d75" stroke-width="2"/></svg>
+              </div>
+              <div class="proximity-radar" id="proximityRadar" hidden aria-hidden="true">
+                <span class="proximity-distance" id="proximityDistance">—</span>
+                <svg viewBox="0 0 36 48"><path d="M18 26v20" stroke="#648092" stroke-width="4"/><rect x="2" y="2" width="32" height="26" rx="8" fill="#ffad65" stroke="#ffe4c7" stroke-width="1.5"/><rect x="8" y="9" width="20" height="12" rx="3" fill="#613c21"/><circle cx="20" cy="15" r="4" fill="#fff4e7"/><circle cx="20" cy="15" r="2" fill="#613c21"/><path d="M10 7h6" stroke="#613c21" stroke-width="2" stroke-linecap="round"/></svg>
+              </div>
+              <div class="proximity-range-track" aria-hidden="true"><span id="proximityRange"></span></div>
+              <div class="proximity-scale" aria-hidden="true"><span>Você · 0 m</span><span>500 m</span><span id="proximityFar">1 km</span></div>
+            </div>
+            <p id="proximityCaption" class="proximity-caption">Inicie o monitoramento para acompanhar a proximidade.</p>
+          </section>
+
+          <p class="road-label" id="roadLabel">Ative o GPS para ver a distância dos radares cadastrados.</p>
 
           <details class="metrics-details"><summary>Detalhes da sessão</summary>
           <div class="metrics">
@@ -92,9 +121,9 @@
           </div></details>
 
           <div class="button-row">
-            <button id="startBtn" class="btn btn-primary"><span class="btn-symbol">◎</span> Iniciar monitoramento</button>
-            <button id="stopBtn" class="btn btn-danger hidden">Parar monitoramento</button>
-            <button id="refreshBtn" class="btn btn-secondary"><span aria-hidden="true">↻</span> Atualizar radares</button>
+            <button id="startBtn" class="btn btn-primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg> Iniciar monitoramento</button>
+            <button id="stopBtn" class="btn btn-danger hidden"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg> Parar monitoramento</button>
+            <button id="refreshBtn" class="btn btn-secondary" title="Atualizar base de radares" aria-label="Atualizar base de radares"><span aria-hidden="true">↻</span> Atualizar radares</button>
           </div>
 
           <div class="notice" id="mainNotice" role="status">
@@ -106,7 +135,7 @@
 
         <aside class="panel side-panel" id="equipmentPanel">
           <div class="panel-head compact">
-            <div><div class="eyebrow">Radar</div><h2>Detalhes do equipamento</h2></div>
+            <div><div class="eyebrow">SOBRE O RADAR</div><h2>Detalhes do equipamento</h2></div>
             <button type="button" class="equipment-toggle" id="equipmentToggle" aria-controls="equipmentBody" aria-expanded="false">Exibir <span aria-hidden="true">⌄</span></button>
           </div>
           <div class="equipment-body" id="equipmentBody">
@@ -269,10 +298,10 @@
     </main>
 
     <!-- Modal de Diagnóstico -->
-    <div id="diagModal" class="modal-overlay hidden">
+    <div id="diagModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="diagTitle" tabindex="-1">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Painel de Diagnóstico do Sistema</h3>
+          <h3 id="diagTitle">Painel de Diagnóstico do Sistema</h3>
           <button class="close-btn" id="closeDiagBtn" aria-label="Fechar diagnóstico">&times;</button>
         </div>
         <div class="modal-body">
@@ -311,21 +340,21 @@
     </div>
 
     <!-- Modal de Configurações e Preferências -->
-    <div id="settingsModal" class="modal-overlay hidden">
+    <div id="settingsModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" tabindex="-1">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Preferências de Alerta e Sistema</h3>
+          <h3 id="settingsTitle">Do seu jeito</h3>
           <button class="close-btn" id="closeSettingsBtn" aria-label="Fechar ajustes">&times;</button>
         </div>
         <div class="modal-body">
           <div class="settings-group">
-            <h4>Alertas por Voz</h4>
+            <h4><span class="setting-index" aria-hidden="true">01</span> Voz e notificações</h4>
             <label class="switch-row">
               <span><b>Ativar voz sintetizada</b><small>Anuncia radar e velocidade</small></span>
               <input id="prefVoiceToggle" type="checkbox" checked><i></i>
             </label>
             <div class="slider-row">
-              <label>Volume do Alerta: <span id="volLabel">100%</span></label>
+              <label for="voiceVolSlider">Volume do Alerta: <span id="volLabel">100%</span></label>
               <input id="voiceVolSlider" type="range" min="0" max="100" value="100">
             </div>
             <button id="testVoiceBtn" class="btn btn-secondary btn-sm">▶ Testar Voz de Alerta</button>
@@ -336,9 +365,9 @@
           </div>
 
           <div class="settings-group">
-            <h4>Distâncias dos Avisos</h4>
+            <h4><span class="setting-index" aria-hidden="true">02</span> Quando avisar</h4>
             <div class="select-row">
-              <label>Primeiro Aviso (Distância)</label>
+              <label for="prefTierFar">Primeiro Aviso (Distância)</label>
               <select id="prefTierFar">
                 <option value="1200">1.200 metros</option>
                 <option value="1000" selected>1.000 metros (Padrão)</option>
@@ -346,14 +375,14 @@
               </select>
             </div>
             <div class="select-row">
-              <label>Segundo Aviso (Intermediário)</label>
+              <label for="prefTierMid">Segundo Aviso (Intermediário)</label>
               <select id="prefTierMid">
                 <option value="500" selected>500 metros (Padrão)</option>
                 <option value="400">400 metros</option>
               </select>
             </div>
             <div class="select-row">
-              <label>Aviso de Proximidade</label>
+              <label for="prefTierNear">Aviso de Proximidade</label>
               <select id="prefTierNear">
                 <option value="200" selected>200 metros (Padrão)</option>
                 <option value="150">150 metros</option>
@@ -362,21 +391,21 @@
           </div>
 
           <div class="settings-group">
-            <h4>Exibição durante a condução</h4>
+            <h4><span class="setting-index" aria-hidden="true">03</span> Durante o trajeto</h4>
             <label class="switch-row">
               <span><b>Modo direção automático</b><small>Após movimento consistente, simplifica o painel. Não altera alertas.</small></span>
               <input id="prefDriveModeToggle" type="checkbox" checked><i></i>
             </label>
           </div>
           <div class="settings-group">
-            <h4>Acessibilidade da interface</h4>
+            <h4><span class="setting-index" aria-hidden="true">04</span> Conforto visual</h4>
             <label class="switch-row">
               <span><b>Contraste reforçado</b><small>Destaca painéis, bordas e textos no celular</small></span>
               <input id="prefContrastToggle" type="checkbox"><i></i>
             </label>
           </div>
           <div class="settings-group">
-            <h4>Privacidade e Armazenamento Local</h4>
+            <h4><span class="setting-index" aria-hidden="true">05</span> Seus dados</h4>
             <p class="privacy-note">Seus dados e bases são armazenados no banco IndexedDB deste aparelho.</p>
             <button id="clearDataBtn" class="btn btn-danger btn-sm">🗑 Limpar Cache e Dados Locais</button>
           </div>
@@ -388,10 +417,10 @@
     </div>
 
     <!-- Modal de Privacidade (LGPD) -->
-    <div id="privacyModal" class="modal-overlay hidden">
+    <div id="privacyModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="privacyTitle" tabindex="-1">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Política de Privacidade e Proteção de Dados (LGPD)</h3>
+          <h3 id="privacyTitle">Política de Privacidade e Proteção de Dados (LGPD)</h3>
           <button class="close-btn" id="closePrivacyBtn" aria-label="Fechar política de privacidade">&times;</button>
         </div>
         <div class="modal-body markdown-content">
@@ -414,10 +443,10 @@
       <a href="#painel" data-screen-link="painel"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Painel</span></a>
       <a href="#mapa" data-screen-link="mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15m6-12v15"/></svg><span>Mapa</span></a>
       <a href="#via" data-screen-link="via"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-7"/></svg><span>Diagnóstico</span></a>
-      <a href="#proximos" data-screen-link="proximos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="7" cy="6" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="10" cy="18" r="1.5"/></svg><span>Radares</span></a>
+      <a href="#proximos" data-screen-link="proximos"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="4"/><circle cx="14" cy="10.5" r="3"/><path d="M6 7h3m3 10v5"/></svg><span>Radares</span></a>
     </nav>
     <footer>
-      <span>Radar Alert · <b>v0.15.1</b></span>
+      <span>Radar Alert · <b>v0.17.2</b></span>
       <span>Ferramenta informativa veicular. Respeite as leis de trânsito e a sinalização física.</span>
     </footer>
   </div>

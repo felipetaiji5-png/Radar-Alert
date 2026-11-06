@@ -1,62 +1,74 @@
-# Radar Alert 0.15.1 — Relatório de correção
+# Verificação — Radar Alert 0.17.2
 
-**Problema reproduzido por análise de código:** o antigo `loadRoadNetwork()` propagava `IllegalStateException` quando o arquivo OSM persistido não continha a revisão atual do catálogo. `onStartCommand()` capturava a exceção fora do carregamento de GPS e chamava `stopTracking()`, interrompendo todo o monitoramento. Isso explica os eventos `error` e `stopped` dos logs de 05:46:50. A origem precisa do snapshot (arquivo legado ou uma atualização concorrente) não pode ser estabelecida apenas pelo log.
+Data: 06/11/2026. Ambiente: Windows, Node 24.11.1, Java 21, Edge via Playwright e Android SDK 36.
 
-**Correção:** o serviço agora trata a falha da malha isoladamente (`restoreRoadNetworkOrSuspend()`), limpa grafo/associações, registra `roadNetworkIssue` e inicia o GPS. Uma região compatível pode ser ativada após sincronização. A integridade dos radares continua obrigatória para emitir alertas de rota.
+## Resultados
 
-**Verificação local:** 137 testes Node (todos passando), JDK 21 para classes Java isoladas, verificações de serialização e fila de sincronização, `npm run check` passou. A integridade do ZIP foi conferida. A compilação Gradle e execução no S23 dependem do seu Android Studio. Os testes de texto-fonte não são equivalentes ao build completo do serviço Android.
+| Verificação | Resultado |
+| --- | --- |
+| Testes Node | 200 aprovados, zero falhas e zero ignorados |
+| Java | Políticas de regiões, revisão, armazenamento e idade GPS compiladas/executadas na suíte Node |
+| Navegador | 25 grupos aprovados; relatório em BROWSER-QA-REPORT.json |
+| Layout | 4 telas em 7 larguras (320–1440 px), sem overflow horizontal |
+| Sintaxe | npm run check aprovado |
+| Web/Android | Build web, sincronização e verificação de templates aprovados |
+| APK | :app:assembleDebug concluído; pacote com.radalert.app, versão 0.17.2, código 17002 |
 
-**Checklist do dispositivo:** após `npm run android:sync`, `npm run android:verify` e Gradle Build, inicie o monitoramento. Confirme `started`, fix GPS e ausência de `stopped` por malha incompatível. Quando a malha do cache Web estiver sincronizada, confirme contagem positiva de regiões. Para testar troca de regiões, use emulador ou passageiro e regiões já preparadas; durante a condução, não manipule a tela.
+## Verificação visual
 
-**Riscos remanescentes:** disponibilidade do Overpass, atualização de dados e lacunas de cobertura, orientação de radar ausente na fonte, falta de validação física. O sinal viário e os limites de velocidade prevalecem.
+- Estados inicial, referência, direção e alto contraste inspecionados em capturas do navegador.
+- Botões iniciar e parar acima da navegação em 390 × 844.
+- Lista com placas de limite, painel, mapa e diagnóstico verificados em 28 combinações com dados fictícios carregados.
+- Movimento reduzido, teclado e restauração de preferências continuam verificados.
 
----
+## Correção de relógio e continuidade
 
-# Radar Alert 0.15.0 — Verificação de qualidade e riscos
+A validação Android usa o relógio monotônico desde a inicialização, conforme a [documentação Location](https://developer.android.com/reference/android/location/Location#getElapsedRealtimeNanos()). O timestamp civil do GPS não decide validade nem ordem. A ponte preserva a idade real na entrega à WebView. Os testes Java cobrem relógio civil adiantado/atrasado, broadcast atrasado, leitura expirada/inválida e recuperação limitada após silêncio, respeitando parada e GPS desativado. O serviço preserva START_STICKY depois de recarregar dados.
 
-Data: 2026-11-04. Base do projeto: Radar Alert 0.14.0. Escopo: revisão e evolução incremental, sem alterar os critérios que autorizam os alertas por rota.
+A suíte de navegador verifica que pagehide e eventos de recuperação não param o monitoramento nativo simulado. Esses testes não executam o ciclo de vida real do serviço Android: o APK foi compilado, mas encerramento/recriação pelo sistema e funcionamento físico continuam pendentes.
 
-## Evidência de verificação nesta sessão
+## Correção do GPS parado
 
-| Verificação | Resultado | Limitação |
-| --- | --- | --- |
-| `npm test` | **132/132 aprovados** | Testes locais e regressões; não é teste de campo |
-| Testes de seleção nativa (`javac`, 8 asserções) | Passou | Lógica pura Java sem Android SDK |
-| Testes de armazenamento (`javac`, 10 asserções) | Passou | Dependências Android `AtomicFile` e JSON simuladas por stubs de teste |
-| `npm run check` | Passou | Sintaxe JS, não faz build do Android |
-| Layout estático em 320/390/430/1280 px | Sem rolagem horizontal | Não equivale à inspeção em WebView do S23 |
-| Pacote ZIP | Inspeção de arquivos e integridade | Não é APK |
-| `npm run build` e `npm run android:sync` | **Não realizados aqui** | Dependências npm/Android SDK indisponíveis no ambiente |
-| GPS em movimento, tela bloqueada e notificações | **Pendente** | Requer S23 ou Android Emulator |
+O serviço nativo solicita posições com deslocamento mínimo zero também em STOPPED, mantendo o intervalo de 6 segundos. O filtro anterior de 5 m podia impedir novas leituras enquanto parado. A suíte Node verifica três minutos de leituras estacionárias, rumo desconhecido, referência sem alerta, expiração real após 90 segundos sem leitura e recuperação. Esse teste simula a sequência de posições; não executa o provedor GPS Android.
 
-## Mudanças críticas e proteções
+Referência da API: https://developer.android.com/reference/android/location/LocationManager#requestLocationUpdates(java.lang.String,long,float,android.location.LocationListener,android.os.Looper)
 
-1. Cache nativo de até 12 regiões previamente sincronizadas, com seleção pela margem de cobertura de 72%. Regiões sem cobertura adequada não são selecionadas.
-2. O cache de pré-carregamento não muda a malha ativa antes da hora, nem habilita alertas por aproximação em linha reta.
-3. Snapshots nativos contêm identificador SHA-256 reduzido (12 caracteres hexadecimais) do catálogo. Uma revisão diferente invalida as associações. O serviço recupera a revisão do arquivo de radares ao iniciar, protegendo também atualizações interrompidas.
-4. Novas malhas são montadas em mapas temporários e só substituem o grafo ativo após a validação; operações de leitura/avaliação e reload usam o mesmo bloqueio nativo.
-5. Gravação atômica para catálogo, malha principal e arquivos regionais. Um dado inválido não autoriza alertas.
-6. Os critérios de associação/Map Matching continuam conservadores: em pista/sentido incertos, os alertas por rota são suspensos.
-7. Leaflet deixa de depender de CDN; o mapa-base de tiles não é offline garantido.
-8. Reexportações idênticas não provocam recargas nativas desnecessárias.
+## Casos de regressão
 
-## Testes essenciais no Android Studio
+- GPS parado sem OSM mostra 111 m e limite 50 da fixture, sem anúncio automático.
+- Ilustração acompanha aproximação de 111 m para 56 m e afastamento, sem movimento independente do GPS.
+- Leitura antiga/futura não inicia posição nem exibe limite; leitura atual recupera o painel.
+- Erro temporário desaparece após nova leitura válida. GPS recusado oculta valores e ilustração.
+- Eventos atrasados de uma sessão encerrada não atualizam a seguinte.
+- Download OSM concluído após rejeição do GPS não emite alerta.
+- Via OSM fictícia confirmada exibe 111 m pela via, limite 50 e somente um anúncio nos fixes repetidos.
+- Limpeza durante download cancela a rede, esvazia IndexedDB/mapa, restaura volume/distâncias e permite atualização manual.
+- Ponte Android simulada: rejeição do GPS, GPS desligado, recuperação, falha ao parar e limpeza durante início atrasado.
+- PWA reabre offline com arquivos e base local. Navegação, mapa, simulador, preferências, foco e Escape continuam funcionais.
 
-1. Na raiz correta do projeto: `npm install`, `npm test`, `npm run check`, `npm run android:sync`, `npm run android:verify`. `android:verify` deve mostrar cinco arquivos Java iguais aos templates e assets Web `v0.15.0`.
-2. Gradle Sync e `:app:assembleDebug` sem erro. Instalar no S23; confirmar interface e versão.
-3. Iniciar monitoramento com localização precisa; confirmar notificação nativa, chegada de fixes e carregamento de malha OSM e catálogo.
-4. Na aba Mapa, preparar uma área próxima fora da malha ativa. Confirmar aumento do contador de regiões nativas no Diagnóstico, sem alterar prematuramente a via candidata atual.
-5. Em emulador, simular trajeto por duas regiões preparadas previamente. Desligar internet e ocultar o app; confirmar evento `roadRegionSwitched`. Fora de todas as regiões, confirmar `roadNetworkCoverageEnded` e ausência de alertas de rota.
-6. Testar atualização do catálogo: arquivos regionais antigos devem ser recusados até nova sincronização.
-7. Testar alternância entre primeiro plano e segundo plano, voltar ao aplicativo e parar monitoramento. Não devem surgir alertas duplicados nem reutilização de via sem rumo confiável.
-8. Validar distância, sentido e radar correspondente durante deslocamento seguro, com pessoa passageira operando o aparelho; o simulador fictício não prova precisão de campo.
+Os dados, posições e respostas da ponte Android usados no navegador são fictícios. A compilação do APK confirma a integração do código Java com o SDK, mas não equivale à execução em aparelho.
 
-## Limitações abertas
+## Reprodução
 
-- Não existe download offline de todas as ruas de São Paulo; o cache regional cobre apenas as regiões que já foram obtidas. Um trajeto pode ter lacunas entre essas regiões.
-- O Overpass público pode dar HTTP 502, 429, timeout ou estar indisponível; não há garantia de SLA. Uma operação que falha não deve ser anunciada como sucesso.
-- As imagens-base do mapa (`tile.openstreetmap.org`) podem não aparecer sem internet, embora a biblioteca Leaflet esteja embutida.
-- Radares da base Pardal podem carecer de direção cadastrada; o algoritmo deliberadamente não avisa quando não identifica pista e sentido com segurança.
-- O algoritmo de distância segue a mesma `roadKey`/camada do grafo OSM e não implementa todas as conversões condicionais, acessos e rotas possíveis.
-- Não foi gerado APK ou executado Gradle nesta sessão. Não declarar esta versão como pronta para produção sem o checklist acima.
-- A sinalização oficial e os limites de velocidade prevalecem sobre as informações do app.
+```powershell
+npm ci
+npm test
+npm run check
+npm run android:sync
+npm run android:verify
+```
+
+Para os testes de navegador, disponibilize o pacote Playwright e um navegador Chromium. O script aceita `RADAR_PLAYWRIGHT_PATH` (caminho do módulo), `RADAR_BROWSER_EXECUTABLE` (executável) e `RADAR_QA_OUTPUT` (pasta de resultados). Depois execute `npm run test:browser`. O servidor e as fixtures são locais; não é necessário GPS real. O JDK deve estar no PATH para executar os testes Java, em vez de ignorá-los.
+
+## Ainda depende do aparelho
+
+- Permissões e primeiro fix de GPS físico.
+- Qualidade da posição parado e em deslocamento, dados reais da região e correspondência com a sinalização.
+- Áudio real, volume e comportamento de notificações.
+- Monitoramento com tela bloqueada, retorno ao app, economia de bateria e perda/retorno de GPS e internet.
+- Atualização sobre a assinatura do APK já instalado.
+
+As instâncias públicas Overpass podem continuar indisponíveis. Nessa situação, o painel apresenta referência em linha reta com GPS válido; alertas de rota dependem de uma malha disponível e de sentido confirmado.
+
+Resultados históricos estão em docs/HISTORICO-QA-ate-0.16.1.md.
+

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.SystemClock;
 
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -61,7 +62,12 @@ public class RadarTrackingPlugin extends Plugin {
                 if (intent.hasExtra("accuracy")) payload.put("accuracy", intent.getFloatExtra("accuracy", 0));
                 if (intent.hasExtra("speedMps")) payload.put("speedMps", intent.getFloatExtra("speedMps", 0));
                 if (intent.hasExtra("bearingDegrees")) payload.put("bearingDegrees", intent.getFloatExtra("bearingDegrees", -1));
-                if (intent.hasExtra("timestampMs")) payload.put("timestampMs", intent.getLongExtra("timestampMs", 0));
+                if ("locationUpdate".equals(eventName)) {
+                    // Inclui o tempo de espera do broadcast: evento atrasado não vira fix novo.
+                    payload.put("timestampMs", LiveFixPolicy.webTimestamp(
+                        intent.getLongExtra("fixElapsedNanos", 0),
+                        SystemClock.elapsedRealtimeNanos(), System.currentTimeMillis()));
+                }
                 if (intent.hasExtra("message")) payload.put("message", intent.getStringExtra("message"));
                 if (intent.hasExtra("mode")) payload.put("mode", intent.getStringExtra("mode"));
                 if (intent.hasExtra("running")) payload.put("running", intent.getBooleanExtra("running", false));

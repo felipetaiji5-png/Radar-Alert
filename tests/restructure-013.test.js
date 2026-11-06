@@ -145,6 +145,6 @@ test('0.13: velocidade inválida ou baixa não ativa o modo direção', async ()
 test('0.13: sessão parada não reavalia e não emite alertas ao atualizar dados', () => {
   const app = source('app.js');
   assert.match(app, /function updateNearby\(\) \{\s*if \(!trackingActive/);
-  assert.match(app, /function updateRouteAlert\(evaluation\) \{\s*if \(!trackingActive\) return;/);
+  assert.match(app, /function updateRouteAlert\(evaluation\) \{\s*if \(!trackingActive(?:\s*\|\|[^\n]+)?\) return;/);
   assert.match(app, /function onPositionSuccess\(coords, timestamp\) \{\s*if \(!trackingActive\) return;/);
 });

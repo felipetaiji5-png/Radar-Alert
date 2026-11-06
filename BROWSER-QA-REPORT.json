@@ -1,0 +1,171 @@
+{
+  "checks": [
+    "Inicialização e carregamento da base de teste",
+    "GPS parado sem OSM: 111 m, limite 50 e nenhuma fala automática",
+    "Ilustração 2D acompanha aproximação/afastamento reais da fixture, oculta GPS recusado e respeita movimento reduzido",
+    "Visual: controles principais cabem em 390 × 844; alto contraste pode ser aplicado e removido",
+    "Mapa: precisão, trilha, expansão e centralização",
+    "Simulador: via única alerta; pistas paralelas e parado não alertam; reinício funciona",
+    "Preferências: volume, distância, fala simulada, persistência, foco e Escape",
+    "Parar monitoramento cancela GPS e limpa o radar do painel",
+    "Preferências recuperadas após recarregar",
+    "GPS antigo/futuro recusado antes da primeira posição; leitura atual recupera painel",
+    "Erro temporário GPS desaparece após leitura válida",
+    "Callback atrasado de sessão encerrada não contamina o reinício",
+    "Modo direção entra após movimento consistente",
+    "Permissão GPS negada encerra a sessão e remove valores anteriores",
+    "Layout: 4 telas sem rolagem horizontal em 320, 360, 390, 430, 768, 1024 e 1440 px",
+    "Nenhuma exceção JavaScript durante os fluxos",
+    "PWA reabre sem internet com app-shell e base local armazenados",
+    "Suspensão da página limpa sessão e permite reinício",
+    "Limpeza cancela download, esvazia IndexedDB/mapa, restaura preferências e permite atualização manual",
+    "Resposta OSM atrasada após GPS recusado não dispara alerta nem restaura limite antigo",
+    "Via OSM confirmada: 111 m, limite 50 e um alerta sem repetição nos fixes seguintes",
+    "Ponte Android: rejeição, GPS desligado e recuperação atualizam painel e ilustração",
+    "Ponte Android: falha ao parar é informada e permite nova tentativa",
+    "Ponte Android: limpeza durante início atrasado encerra serviço antes de apagar dados"
+  ],
+  "layout": [
+    {
+      "width": 320,
+      "screen": "painel",
+      "scroll": 320
+    },
+    {
+      "width": 320,
+      "screen": "mapa",
+      "scroll": 320
+    },
+    {
+      "width": 320,
+      "screen": "via",
+      "scroll": 320
+    },
+    {
+      "width": 320,
+      "screen": "proximos",
+      "scroll": 320
+    },
+    {
+      "width": 360,
+      "screen": "painel",
+      "scroll": 360
+    },
+    {
+      "width": 360,
+      "screen": "mapa",
+      "scroll": 360
+    },
+    {
+      "width": 360,
+      "screen": "via",
+      "scroll": 360
+    },
+    {
+      "width": 360,
+      "screen": "proximos",
+      "scroll": 360
+    },
+    {
+      "width": 390,
+      "screen": "painel",
+      "scroll": 390
+    },
+    {
+      "width": 390,
+      "screen": "mapa",
+      "scroll": 390
+    },
+    {
+      "width": 390,
+      "screen": "via",
+      "scroll": 390
+    },
+    {
+      "width": 390,
+      "screen": "proximos",
+      "scroll": 390
+    },
+    {
+      "width": 430,
+      "screen": "painel",
+      "scroll": 430
+    },
+    {
+      "width": 430,
+      "screen": "mapa",
+      "scroll": 430
+    },
+    {
+      "width": 430,
+      "screen": "via",
+      "scroll": 430
+    },
+    {
+      "width": 430,
+      "screen": "proximos",
+      "scroll": 430
+    },
+    {
+      "width": 768,
+      "screen": "painel",
+      "scroll": 768
+    },
+    {
+      "width": 768,
+      "screen": "mapa",
+      "scroll": 768
+    },
+    {
+      "width": 768,
+      "screen": "via",
+      "scroll": 768
+    },
+    {
+      "width": 768,
+      "screen": "proximos",
+      "scroll": 768
+    },
+    {
+      "width": 1024,
+      "screen": "painel",
+      "scroll": 1024
+    },
+    {
+      "width": 1024,
+      "screen": "mapa",
+      "scroll": 1024
+    },
+    {
+      "width": 1024,
+      "screen": "via",
+      "scroll": 1024
+    },
+    {
+      "width": 1024,
+      "screen": "proximos",
+      "scroll": 1024
+    },
+    {
+      "width": 1440,
+      "screen": "painel",
+      "scroll": 1440
+    },
+    {
+      "width": 1440,
+      "screen": "mapa",
+      "scroll": 1440
+    },
+    {
+      "width": 1440,
+      "screen": "via",
+      "scroll": 1440
+    },
+    {
+      "width": 1440,
+      "screen": "proximos",
+      "scroll": 1440
+    }
+  ],
+  "errors": []
+}

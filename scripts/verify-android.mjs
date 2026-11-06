@@ -8,7 +8,7 @@ const packageName = config.appId.replaceAll('.', path.sep);
 const installed = path.join(root, 'android', 'app', 'src', 'main', 'java', packageName);
 const template = path.join(root, 'android-template', 'app', 'src', 'main', 'java', 'com', 'radalert', 'app');
 const classes = ['MainActivity.java', 'RadarTrackingPlugin.java', 'RadarTrackingService.java',
-  'RoadRegionSelector.java', 'RoadRegionStore.java', 'RoadSnapshotRevision.java'];
+  'RoadRegionSelector.java', 'RoadRegionStore.java', 'RoadSnapshotRevision.java', 'LiveFixPolicy.java'];
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 let errors = 0;
 for (const name of classes) {

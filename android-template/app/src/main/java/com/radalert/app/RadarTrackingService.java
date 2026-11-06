@@ -449,7 +449,9 @@ public class RadarTrackingService extends Service implements LocationListener {
             return;
         }
         long interval = "HIGHWAY".equals(gpsMode) ? 1000L : ("STOPPED".equals(gpsMode) ? 6000L : 1800L);
-        float minDistance = "STOPPED".equals(gpsMode) ? 5.0f : 0.0f;
+        // O intervalo reduz a frequência quando parado. Exigir deslocamento aqui
+        // impediria novos fixes no mesmo ponto e faria o painel expirar em 90 s.
+        float minDistance = 0.0f;
         try {
             if (locationRegistered) locationManager.removeUpdates(this);
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval, minDistance, this, locationThread.getLooper());
@@ -464,6 +466,10 @@ public class RadarTrackingService extends Service implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
+        if (location != null && !LiveFixPolicy.isFresh(location.getTime(), System.currentTimeMillis())) {
+            emitServiceEvent("Leitura GPS antiga ou com horário inválido. Aguardando posição atual.", "gpsStale", true);
+            return;
+        }
         if (location == null || !location.hasAccuracy() || location.getAccuracy() <= 0 || location.getAccuracy() > 65.0f) {
             emitServiceEvent("Fix GPS ignorado: precisão acima de 65 metros ou inválida.", "gpsLowAccuracy", true);
             return;

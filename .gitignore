@@ -1,9 +1,11 @@
 node_modules/
 www/
-android/
+/android/
 .gradle/
 .idea/
 *.iml
 local.properties
 .DS_Store
 Thumbs.db
+
+/qa-results/

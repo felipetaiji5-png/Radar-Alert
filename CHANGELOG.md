@@ -1,3 +1,52 @@
+## 0.17.1 — GPS com o veículo parado
+
+- Remove o deslocamento mínimo de 5 m exigido pelo serviço Android no perfil STOPPED, mantendo o intervalo solicitado de 6 segundos.
+- Evita que o próprio filtro de movimento interrompa novas leituras e faça o painel indicar GPS desatualizado. A entrega efetiva continua dependente do GPS e do Android.
+- Mantém o rumo desconhecido quando parado e a distância em linha reta como referência, sem liberar alertas de rota sem confirmação.
+- Adiciona regressão com três minutos de posições estacionárias, expiração após perda de leituras e recuperação.
+
+## 0.17.0 — Horizonte
+
+- Interface redesenhada com azul profundo, painel claro e detalhes em laranja.
+- Ilustração 2D integrada aos instrumentos, com cenário vetorial e régua proporcional.
+- Navegação flutuante, ícones revisados e placas de limite na lista de radares.
+- Alto contraste com instrumentos escuros e ajustes reorganizados.
+- Referências de produtos reais: CarPlay, Rivian, Polestar, Mapbox e Waze; fontes documentadas.
+- 198 testes Node e 24 grupos de navegador aprovados. APK compilado; GPS físico e tela bloqueada permanecem pendentes.
+
+## 0.16.2
+
+- Rejeição de GPS antigo/futuro antes de alertar, no painel e no serviço Android.
+- Cancelamento de consultas e isolamento de eventos de sessões encerradas.
+- Recuperação correta de erros GPS e indicação de falha ao parar o serviço.
+- Limpeza de dados sem download automático imediato, com restauração das preferências e cancelamento de início pendente.
+- Correção da suspensão/reabertura da página e ocultação de valores sem GPS válido.
+- 198 testes Node, 23 grupos de navegador e compilação APK aprovados. GPS físico e execução com tela bloqueada ainda pendentes.
+
+## 0.16.1
+
+- Nova ilustração 2D de carro, rua e radar vinculada à distância do painel.
+- Escala de 0–1 km, movimento conforme GPS e diferenciação entre distância pela via e em linha reta.
+- Oculta radar com GPS inválido e respeita movimento reduzido.
+- Corrigida mensagem persistente de GPS impreciso após recuperação.
+- 186 testes Node, 13 grupos de navegador e compilação APK aprovados; validação física pendente.
+
+## 0.16.0
+
+Interface redesenhada com tema escuro e verde-lima; novos painéis, navegação desktop, modais acessíveis e ícone Android. 172 testes Node, 12 grupos de testes de navegador, 28 combinações de layout e compilação APK debug aprovados. Validação física no aparelho pendente.
+
+## 0.15.3
+
+- Corrigido o painel que ocultava limite e distância sem radar confirmado pela malha OSM.
+- Exibe o radar ativo mais próximo como referência, com distância em linha reta e limite cadastrado, inclusive parado.
+- Referências não emitem alertas; distância pela via tem prioridade quando há radar de rota confirmado.
+- Limpa valores com GPS inválido/desatualizado ou monitoramento desligado.
+- 172 testes e build web aprovados; APK e validação em aparelho pendentes.
+
+## 0.15.2
+
+Inicialização da base sem bloqueio pelo catálogo, recuperação de respostas Overpass incompletas, preferências validadas e mensagens corretas de persistência. Restaurado stub Java ausente e adicionado lockfile. 153 testes e build web aprovados. APK e testes em aparelho pendentes.
+
 # Changelog
 
 ## 0.15.1 — Hotfix de migração e continuidade do GPS nativo
@@ -121,3 +170,5 @@
 - Adicionado cooldown de 2 minutos após falha total para evitar repetição agressiva de consultas.
 - Quando há malha local que cobre a posição, o cache é usado durante o cooldown em vez de suspender desnecessariamente a cobertura.
 - Testes de fallback de endpoint e cooldown.
+
+

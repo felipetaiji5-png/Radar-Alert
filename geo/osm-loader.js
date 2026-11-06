@@ -27,8 +27,11 @@ export function roadCacheKey(lat, lng) {
   return `osm-roads:${(Math.round(lat * 200) / 200).toFixed(4)}:${(Math.round(lng * 200) / 200).toFixed(4)}`;
 }
 
-async function postOverpass(endpoint, query, timeoutMs, fetchImpl = globalThis.fetch) {
+async function postOverpass(endpoint, query, timeoutMs, fetchImpl = globalThis.fetch, signal) {
+  signal?.throwIfAborted();
   const controller = new AbortController();
+  const cancel = () => controller.abort();
+  signal?.addEventListener('abort', cancel, { once: true });
   let timedOut = false;
   const timer = setTimeout(() => {
     timedOut = true;
@@ -49,6 +52,7 @@ async function postOverpass(endpoint, query, timeoutMs, fetchImpl = globalThis.f
     }
     const json = await response.json();
     if (!Array.isArray(json.elements)) throw new Error('Resposta Overpass sem elementos OSM.');
+    if (json.remark) throw new Error(`Resposta Overpass incompleta: ${json.remark}`);
     return json;
   } catch (error) {
     if (timedOut) {
@@ -60,6 +64,7 @@ async function postOverpass(endpoint, query, timeoutMs, fetchImpl = globalThis.f
     throw error;
   } finally {
     clearTimeout(timer);
+    signal?.removeEventListener('abort', cancel);
   }
 }
 
@@ -91,7 +96,8 @@ export class OverpassRoadLoader {
     this.retryAfter = 0;
   }
 
-  async loadAround(position, { force = false } = {}) {
+  async loadAround(position, { force = false, signal } = {}) {
+    signal?.throwIfAborted();
     const key = roadCacheKey(position.lat, position.lng);
     const exact = await this.store?.getRoadNetwork?.(key);
     // A malha de uma célula vizinha também pode cobrir a posição. Não exigir
@@ -101,6 +107,7 @@ export class OverpassRoadLoader {
       : null;
     const cacheCandidates = [exact, nearby].filter(Boolean).sort((a, b) =>
       roadCacheSuitability(b, position) - roadCacheSuitability(a, position));
+    signal?.throwIfAborted();
     let cached = null, cachedProvider = null;
     for (const record of cacheCandidates) {
       if (roadCacheSuitability(record, position) === -Infinity) continue;
@@ -159,7 +166,7 @@ export class OverpassRoadLoader {
 
     this.lastRequestAt = Date.now();
     const failures = [];
-    let osm = null, endpointUsed = null, radiusUsed = null;
+    let osm = null, built = null, metadata = null;
 
     for (let index = 0; index < this.endpoints.length; index++) {
       const endpoint = this.endpoints[index];
@@ -170,15 +177,30 @@ export class OverpassRoadLoader {
       const startedAt = Date.now();
 
       try {
-        osm = await postOverpass(endpoint, query, this.timeoutMs, this.fetchImpl);
-        endpointUsed = endpoint;
-        radiusUsed = attemptRadius;
+        const candidate = await postOverpass(endpoint, query, this.timeoutMs, this.fetchImpl, signal);
+        signal?.throwIfAborted();
+        const candidateMetadata = {
+          center: { lat: position.lat, lng: position.lng }, radiusMeters: attemptRadius,
+          osmTimestamp: candidate.osm3s?.timestamp_osm_base || null,
+          downloadedAt: new Date().toISOString(), endpoint
+        };
+        const candidateBuilt = buildRoadNetworkFromOverpass(candidate, candidateMetadata);
+        if (!candidateBuilt.provider.getAllSegments().length) {
+          throw new Error('A consulta OSM retornou dados, mas nenhum segmento viário utilizável.');
+        }
+        osm = candidate;
+        built = candidateBuilt;
+        metadata = candidateMetadata;
         notifyAttempt(this.onAttempt, {
           endpoint, radiusMeters: attemptRadius, durationMs: Date.now() - startedAt,
           ok: true, elementCount: osm.elements.length
         });
         break;
       } catch (error) {
+        if (signal?.aborted) {
+          this.lastRequestAt = 0;
+          throw error;
+        }
         const durationMs = Date.now() - startedAt;
         const summary = `${new URL(endpoint).host}: ${error.message}`;
         failures.push(summary);
@@ -208,17 +230,12 @@ export class OverpassRoadLoader {
       );
     }
 
-    const metadata = {
-      center: { lat: position.lat, lng: position.lng },
-      radiusMeters: radiusUsed,
-      osmTimestamp: osm.osm3s?.timestamp_osm_base || null,
-      downloadedAt: new Date().toISOString(), endpoint: endpointUsed
-    };
-    const built = buildRoadNetworkFromOverpass(osm, metadata);
-    if (built.provider.getAllSegments().length === 0) {
-      throw new Error('A consulta OSM retornou dados, mas nenhum segmento viário utilizável.');
-    }
-    await this.store?.saveRoadNetwork?.(key, { osm, metadata });
-    return { ...built, source: 'Overpass', savedAt: metadata.downloadedAt, stale: false, key };
+    let persisted = false;
+    signal?.throwIfAborted();
+    try { persisted = await this.store?.saveRoadNetwork?.(key, { osm, metadata }) === true; }
+    catch { /* A malha válida continua utilizável nesta sessão. */ }
+    this.retryAfter = 0;
+    return { ...built, source: 'Overpass', savedAt: metadata.downloadedAt, stale: false, key, persisted,
+      warning: persisted ? null : 'Ruas carregadas somente nesta sessão; não foi possível salvar a região para uso offline.' };
   }
 }

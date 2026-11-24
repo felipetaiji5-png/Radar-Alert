@@ -2,6 +2,7 @@
   "name": "radar-alert",
   "version": "0.15.1",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Radar Alert — PWA e aplicativo Android com serviço de localização em primeiro plano",
   "scripts": {

@@ -318,6 +318,10 @@ Os testes JavaScript validam a normalização de dados, o grafo OSM, as rotas e 
 
 ## Licenças e atribuição
 
+### Licença do código e dos dados
+
+A [licença MIT](LICENSE) cobre o código próprio do Radar Alert. A base de radares do Pardal e os dados cartográficos do OpenStreetMap continuam sob a [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
+
 - OpenStreetMap: © OpenStreetMap contributors, ODbL — https://www.openstreetmap.org/copyright.
 - Dados de radares: Pardal — https://github.com/Murkiriel/pardal; verifique obrigações ODbL para redistribuição.
 - Leaflet: BSD 2-Clause — https://leafletjs.com/.

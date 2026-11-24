@@ -1,5 +1,7 @@
 # Changelog
 
+As [notas históricas](docs/notas-historicas.md) reúnem detalhes de migração e registros de testes por versão.
+
 ## 0.15.1 — Hotfix de migração e continuidade do GPS nativo
 
 - Corrigido crash lógico do início do serviço Android ao encontrar `road-network-background.json` de versão antiga ou incompatível. A malha inválida é rejeitada, a cobertura é marcada como indisponível e os alertas de rota permanecem suspensos, porém o GPS nativo continua ativo.
@@ -88,7 +90,12 @@
 - Map Matching não marca conexão topológica da mesma via como ambiguidade automática.
 - Novos testes para cache regional, plano direcional e continuidade do Map Matching.
 
-# Changelog — Radar Alert
+## 0.8.2
+
+- Adicionada terceira instância pública Overpass (VK Maps / maps.mail.ru) como fallback independente.
+- Adicionado cooldown de 2 minutos após falha total para evitar repetição agressiva de consultas.
+- Quando há malha local que cobre a posição, o cache é usado durante o cooldown em vez de suspender desnecessariamente a cobertura.
+- Testes de fallback de endpoint e cooldown.
 
 ## 0.8.1 — confiabilidade da carga OSM
 
@@ -115,9 +122,3 @@
 
 - Serviço de localização Android em primeiro plano, plugin Capacitor e alertas conservadores em segundo plano.
 - PWA continua oferecendo map matching OSM enquanto a interface está visível.
-
-## 0.8.2
-- Adicionada terceira instância pública Overpass (VK Maps / maps.mail.ru) como fallback independente.
-- Adicionado cooldown de 2 minutos após falha total para evitar repetição agressiva de consultas.
-- Quando há malha local que cobre a posição, o cache é usado durante o cooldown em vez de suspender desnecessariamente a cobertura.
-- Testes de fallback de endpoint e cooldown.

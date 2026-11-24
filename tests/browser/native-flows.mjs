@@ -47,9 +47,10 @@ export async function testNativeFlows(browser, origin, csv, pass) {
   const page = await context.newPage(), errors = [];
   page.on('pageerror', error => errors.push(error.message));
   try {
-    let releaseCatalog;
+    let releaseCatalog, downloads = 0;
     const catalogGate = new Promise(resolve => { releaseCatalog = resolve; });
     await page.route('**/radares.csv', async route => {
+      downloads += 1;
       await catalogGate;
       await route.fulfill({ status: 200, body: csv });
     });
@@ -117,5 +118,21 @@ export async function testNativeFlows(browser, origin, csv, pass) {
     assert.ok(calls.lastIndexOf('setRadars') < calls.lastIndexOf('clearLocalData'));
     assert.deepEqual(errors, []);
     pass('Ponte Android: limpeza durante início atrasado encerra serviço antes de apagar dados');
+    await page.evaluate(() => {
+      window.__online = false; window.__native.delayStart = false;
+      Object.defineProperty(Navigator.prototype, 'onLine', { configurable: true, get: () => window.__online });
+    });
+    await page.locator('#startBtn').click();
+    await page.waitForFunction(() => window.__native.running);
+    await page.evaluate(() => window.__nativeFix());
+    const syncsBefore = await page.evaluate(() => window.__native.calls.filter(call => call === 'setRadars').length);
+    const downloadsBefore = downloads;
+    await page.evaluate(() => { window.__online = true; window.dispatchEvent(new Event('online')); window.dispatchEvent(new Event('online')); });
+    await page.waitForFunction(() => document.getElementById('datasetStatus').textContent.includes('131'));
+    await page.waitForFunction(count => window.__native.calls.filter(call => call === 'setRadars').length > count, syncsBefore);
+    assert.equal(downloads - downloadsBefore, 1);
+    assert.equal(await page.evaluate(() => window.__native.running), true);
+    assert.deepEqual(errors, []);
+    pass('Ponte Android: reconexão sem base baixa uma vez e sincroniza radares com o serviço ativo');
   } finally { await context.close(); }
 }

@@ -1,3 +1,9 @@
+# Radar Alert 0.19.1 — Verificação de 24 de novembro de 2026
+
+O teste de regressão reproduziu um aviso duplicado após 125 segundos sem confirmação da via e apenas um segundo de ausência confirmada. Após a correção, o motor web cancela a contagem quando o radar reaparece antes de dois minutos. O teste também verifica que uma segunda passagem volta a gerar aviso no limite de dois minutos.
+
+Passaram os 209 testes Node/Java, sem casos ignorados, a checagem de sintaxe e os 31 grupos de navegador com GPS simulado. Na primeira execução de navegador, o teste de reconexão tentou liberar a resposta simulada do mapa antes de a requisição chegar. O teste foi corrigido e a suíte completa passou ao ser repetida. A sincronização Android, a verificação das classes e a compilação debug passaram. O APK 0.19.1 tem código Android 19001 e o mesmo certificado do APK 0.18.0 publicado. Os recursos web, incluindo a licença da fonte, coincidiram com o build testado. GPS, voz e tela bloqueada em aparelho real seguem pendentes.
+
 # Radar Alert 0.18.0 — Verificação da edição GPS
 
 Em 24 de novembro de 2026, a integração dos fontes da edição de 22 de novembro passou nos 202 testes Node/Java, sem testes ignorados, e na checagem de sintaxe. Os 27 grupos de navegador passaram com GPS, catálogo e ponte Android simulados. Um dos fluxos recebeu posição com o catálogo pendente e sincronizou os dados após o download. As capturas do painel de referência em retrato e paisagem coincidiram com as da entrega original.

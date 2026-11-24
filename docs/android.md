@@ -1,6 +1,6 @@
 # Executar o Radar Alert no Android
 
-O [APK de teste](../downloads/RadarAlert-0.18.0-gps-debug.apk) usa o pacote `com.radalert.app`, versão 0.18.0 e código 18000. Para atualizar uma instalação existente, a assinatura deve ser compatível.
+O [APK de teste](https://github.com/felipetaiji5-png/Radar-Alert/releases/download/v0.19.1/RadarAlert-0.19.1-debug.apk) usa o pacote `com.radalert.app`, versão 0.19.1 e código 19001. Para atualizar uma instalação existente, a assinatura deve ser compatível.
 
 Para compilar os fontes, use Node.js 22.12 ou superior, JDK 21, Android Studio com Android SDK 36 e um dispositivo ou emulador. Execute os comandos na pasta que contém `package.json`.
 

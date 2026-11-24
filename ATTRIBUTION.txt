@@ -3,3 +3,6 @@ A base Pardal é disponibilizada sob Open Database License (ODbL) 1.0. Consulte 
 Cartografia: © OpenStreetMap contributors, https://www.openstreetmap.org/copyright
 Leaflet: https://leafletjs.com/ (BSD 2-Clause License)
 Este protótipo não é oficial nem endossado por órgão de trânsito e não substitui a sinalização viária.
+
+Fonte Overpass (Delve Withrington, Dave Bailey, Thomas Jockin; Red Hat): SIL Open Font License 1.1, arquivo fonts/OFL-Overpass.txt.
+Ícones de interface baseados em Lucide (https://lucide.dev), licença ISC.

@@ -1,4 +1,4 @@
-const CACHE = 'radar-alert-shell-v0180';
+const CACHE = 'radar-alert-shell-v0191';
 const SHELL = [
   '/', '/index.html', '/styles.css', '/app.js', '/core.js', '/manifest.webmanifest', '/icon.svg',
   '/geo/geo-math.js', '/geo/radar-consolidator.js', '/geo/spatial-index.js',

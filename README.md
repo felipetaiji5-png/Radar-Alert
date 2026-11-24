@@ -1,10 +1,12 @@
-# Radar Alert 0.18.0
+# Radar Alert 0.19.1
 
 O Radar Alert usa o GPS, a base de radares do Pardal em São Paulo e a malha viária do OpenStreetMap para avisar sobre radares à frente na via e no sentido de deslocamento. Funciona no navegador como PWA e no Android com monitoramento em segundo plano. Sem cobertura viária válida ou com a via incerta, os alertas por rota ficam suspensos. A sinalização da via prevalece.
 
 ## Baixar para Android
 
-[Baixar o APK de teste 0.18.0](https://raw.githubusercontent.com/felipetaiji5-png/Radar-Alert/main/downloads/RadarAlert-0.18.0-gps-debug.apk) · [Checksum SHA-256](downloads/RadarAlert-0.18.0-gps-debug.apk.sha256)
+Os fontes desta revisão contam a ausência do radar a partir da primeira leitura que confirma sua saída do trajeto. O build inclui a licença da fonte Overpass em `fonts/OFL-Overpass.txt`.
+
+[Baixar o APK de teste 0.19.1](https://github.com/felipetaiji5-png/Radar-Alert/releases/download/v0.19.1/RadarAlert-0.19.1-debug.apk) · [Checksum SHA-256](https://github.com/felipetaiji5-png/Radar-Alert/releases/download/v0.19.1/RadarAlert-0.19.1-debug.apk.sha256)
 
 Na edição de 22 de novembro de 2026, o GPS pode iniciar enquanto o catálogo de radares está indisponível. A posição e a velocidade aparecem quando há uma leitura válida. Os alertas por rota dependem também dos dados de radares e da cobertura viária.
 

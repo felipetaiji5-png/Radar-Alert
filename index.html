@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#080809" />
+  <meta name="theme-color" content="#111316" />
   <meta name="description" content="Radar Alert — radares próximos, distância e acompanhamento de viagem em São Paulo." />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
@@ -17,9 +17,9 @@
     <header class="topbar">
       <a class="brand" href="#painel" aria-label="Radar Alert início">
         <span class="brand-mark">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19a8 8 0 0 1 16 0M7 19a5 5 0 0 1 10 0M10 19a2 2 0 0 1 4 0M12 4v3m7 0-2 2M5 7l2 2"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
         </span>
-        <span><strong>Radar Alert</strong><small>São Paulo · v0.18.0</small></span>
+        <span><strong>Radar Alert</strong><small>São Paulo · v0.19.1</small></span>
       </a>
       <nav class="desktop-nav" aria-label="Seções do aplicativo">
         <a href="#painel" data-screen-link="painel">Painel</a>
@@ -29,14 +29,14 @@
       </nav>
       <div class="top-actions">
         <span id="gpsStatus" class="pill"><i></i> GPS DESLIGADO</span>
-        <button id="diagBtn" class="icon-btn" title="Diagnóstico do sistema" aria-label="Abrir diagnóstico do sistema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-7"/></svg><span>Diagnóstico</span></button>
-        <button id="settingsBtn" class="icon-btn" title="Configurações e alertas" aria-label="Abrir configurações"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg><span>Ajustes</span></button>
+        <button id="diagBtn" class="icon-btn" title="Diagnóstico do sistema" aria-label="Abrir diagnóstico do sistema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg><span>Diagnóstico</span></button>
+        <button id="settingsBtn" class="icon-btn" title="Configurações e alertas" aria-label="Abrir configurações"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H3M12 19H3M14 3v4M16 17v4M21 12h-9M21 19h-5M21 5h-7M8 10v4M8 12H3"/></svg><span>Ajustes</span></button>
         <button id="installBtn" class="icon-btn hidden" title="Instalar aplicativo">Instalar</button>
       </div>
     </header>
 
     <div id="staleDataBanner" class="alert-banner hidden">
-      <span class="banner-icon">⚠</span>
+      <span class="banner-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></svg></span>
       <span>Atenção: A base de dados local possui mais de 30 dias. Conecte-se à internet para atualizar.</span>
     </div>
 
@@ -121,13 +121,13 @@
           </div></details>
 
           <div class="button-row">
-            <button id="startBtn" class="btn btn-primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg> Iniciar monitoramento</button>
+            <button id="startBtn" class="btn btn-primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg> Iniciar monitoramento</button>
             <button id="stopBtn" class="btn btn-danger hidden"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg> Parar monitoramento</button>
-            <button id="refreshBtn" class="btn btn-secondary" title="Atualizar base de radares" aria-label="Atualizar base de radares"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 5v5h-5M4 19v-5h5"/><path d="M5 9a7.5 7.5 0 0 1 12.8-3L20 9M4 15l2.2 3A7.5 7.5 0 0 0 19 15"/></svg> Atualizar radares</button>
+            <button id="refreshBtn" class="btn btn-secondary" title="Atualizar base de radares" aria-label="Atualizar base de radares"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Atualizar radares</button>
           </div>
 
           <div class="notice" id="mainNotice" role="status">
-            <span class="notice-icon">i</span>
+            <span class="notice-icon" aria-hidden="true">i</span>
             <span>Carregando o motor geoespacial e a base de radares de São Paulo.</span>
           </div>
           <p class="gps-error hidden" id="gpsError"></p>
@@ -136,7 +136,7 @@
         <aside class="panel side-panel" id="equipmentPanel">
           <div class="panel-head compact">
             <div><h2>Detalhes do equipamento</h2></div>
-            <button type="button" class="equipment-toggle" id="equipmentToggle" aria-controls="equipmentBody" aria-expanded="false">Exibir <span aria-hidden="true">⌄</span></button>
+            <button type="button" class="equipment-toggle" id="equipmentToggle" aria-controls="equipmentBody" aria-expanded="false">Exibir <span aria-hidden="true"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
           </div>
           <div class="equipment-body" id="equipmentBody">
           <div class="next-detail"><span>Tipo do equipamento</span><b id="radarKind">—</b></div>
@@ -365,7 +365,7 @@
               <label for="voiceVolSlider">Volume do Alerta: <span id="volLabel">100%</span></label>
               <input id="voiceVolSlider" type="range" min="0" max="100" value="100">
             </div>
-            <button id="testVoiceBtn" class="btn btn-secondary btn-sm">▶ Testar Voz de Alerta</button>
+            <button id="testVoiceBtn" class="btn btn-secondary btn-sm">Testar voz de alerta</button>
             <label class="switch-row">
               <span><b>Notificações do navegador</b><small>Exige permissão concedida pelo navegador</small></span>
               <input id="prefNotificationsToggle" type="checkbox"><i></i>
@@ -415,7 +415,7 @@
           <div class="settings-group">
             <h4>Seus dados</h4>
             <p class="privacy-note">Seus dados e bases são armazenados no banco IndexedDB deste aparelho.</p>
-            <button id="clearDataBtn" class="btn btn-danger btn-sm">🗑 Limpar Cache e Dados Locais</button>
+            <button id="clearDataBtn" class="btn btn-danger btn-sm">Limpar cache e dados locais</button>
           </div>
         </div>
         <div class="modal-footer">
@@ -448,13 +448,13 @@
     </div>
 
     <nav class="mobile-nav" aria-label="Navegação principal">
-      <a href="#painel" data-screen-link="painel"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Painel</span></a>
-      <a href="#mapa" data-screen-link="mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15m6-12v15"/></svg><span>Mapa</span></a>
-      <a href="#via" data-screen-link="via"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-7"/></svg><span>Diagnóstico</span></a>
-      <a href="#proximos" data-screen-link="proximos"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="4"/><circle cx="14" cy="10.5" r="3"/><path d="M6 7h3m3 10v5"/></svg><span>Radares</span></a>
+      <a href="#painel" data-screen-link="painel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg><span>Painel</span></a>
+      <a href="#mapa" data-screen-link="mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.11 5.55a2 2 0 0 0 1.78 0l3.66-1.83A1 1 0 0 1 21 4.62v12.76a1 1 0 0 1-.55.9l-4.56 2.27a2 2 0 0 1-1.78 0l-4.22-2.1a2 2 0 0 0-1.78 0l-3.66 1.83A1 1 0 0 1 3 19.38V6.62a1 1 0 0 1 .55-.9l4.56-2.27a2 2 0 0 1 1.78 0z"/><path d="M15 5.76v15M9 3.24v15"/></svg><span>Mapa</span></a>
+      <a href="#via" data-screen-link="via"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg><span>Diagnóstico</span></a>
+      <a href="#proximos" data-screen-link="proximos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.75 12h3.63a1 1 0 0 1 .9 1.45l-2.04 4.07a1 1 0 0 1-1.7.13l-2.13-2.97"/><path d="M17.1 9.05a1 1 0 0 1 .45 1.34l-3.1 6.21a1 1 0 0 1-1.35.45L3.61 12.3a2.92 2.92 0 0 1-1.3-3.91L3.69 5.6a2.92 2.92 0 0 1 3.92-1.3z"/><path d="M2 19h3.76a2 2 0 0 0 1.8-1.1L9 15M2 21v-4M7 9h.01"/></svg><span>Radares</span></a>
     </nav>
     <footer>
-      <span>Radar Alert · <b>v0.18.0</b></span>
+      <span>Radar Alert · <b>v0.19.1</b></span>
       <span>Ferramenta informativa veicular. Respeite as leis de trânsito e a sinalização física.</span>
     </footer>
   </div>

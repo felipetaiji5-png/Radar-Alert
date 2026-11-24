@@ -2,6 +2,16 @@
 
 As [notas históricas](docs/notas-historicas.md) reúnem detalhes de migração e registros de testes por versão.
 
+## 0.19.1 — 24 de novembro de 2026
+
+- O prazo de dois minutos para um novo aviso começa na primeira ausência confirmada do radar. Um retorno antes do prazo cancela a contagem.
+- O build distribui a licença da fonte Overpass no caminho indicado nas atribuições e inclui essa licença no cache offline.
+
+- Sem cópia local, o monitoramento baixa a base quando há internet: ao reconectar ou ao iniciar com a rede já de volta, uma única vez mesmo com reconexões repetidas ou carga em andamento, e a sincroniza com o serviço Android.
+- O alerta web volta a avisar numa nova passagem pelo mesmo radar: exige saída confirmada do trajeto por 2 minutos e reaparecimento à frente com o veículo em movimento (ou, sem velocidade, além da faixa já anunciada). Perdas breves de GPS, cobertura ou confirmação e o veículo parado não rearmam.
+- O histórico do diagnóstico e o agrupamento de notificações não usam mais o identificador interno, que pode conter coordenadas; o diagnóstico registra tipo de aviso, equipamento e distância.
+- Nova identidade visual "Sinalização": asfalto como fundo e a placa principal trocando de cor conforme o estado (azul aguardando, amarelo de advertência para referência em linha reta, verde de rodovia para via confirmada), limite como placa R-19, Parar como placa vermelha, fonte Overpass auto-hospedada, ícones no estilo Lucide e novo ícone do app.
+
 ## 0.18.0 — Edição GPS de 22 de novembro de 2026
 
 O monitoramento começa mesmo enquanto a base de radares está indisponível. O painel mostra a posição e a velocidade recebidas e identifica a espera pelo catálogo. O serviço Android renova a solicitação sem cancelar o listener de localização. O painel de direção recebeu ícones e controles de maior contraste.

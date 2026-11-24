@@ -40,7 +40,7 @@ try {
     if (url.includes('catalogo.json')) return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ufs":{"SP":{"built_at":"2026-11-05"}}}' });
     return route.fulfill({ status: 503, body: 'Offline fixture' });
   });
-  await context.addInitScript(() => {
+  const fakeDevice = () => {
     window.__gpsCallbacks = new Map();
     window.__gpsNext = 0;
     Object.defineProperty(navigator, 'geolocation', { configurable: true, value: {
@@ -56,7 +56,8 @@ try {
       window.speechSynthesis.speak = message => window.__spoken.push(message.text);
       window.speechSynthesis.cancel = () => {};
     }
-  });
+  };
+  await context.addInitScript(fakeDevice);
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -374,7 +375,10 @@ try {
   assert.equal(await routePage.evaluate(() => window.__spoken.length), 1);
   assert.match(await routePage.locator('#proximityMode').textContent(), /via/i);
   pass('Via OSM confirmada: 111 m, limite 50 e um alerta sem repetição nos fixes seguintes');
+  await routePage.screenshot({ path: path.join(out, '13-mobile-via-confirmada.png'), fullPage: false });
   await routePage.close();
+  await testReconnectAndDiagnostics(browser, fakeDevice, errors);
+  await testReconnectBeforeStart(browser, fakeDevice, errors);
   await testNativeFlows(browser, origin, csv, pass);
   await writeFile(path.join(out, 'report.json'), JSON.stringify({ checks, layout, errors }, null, 2));
 } finally {
@@ -382,4 +386,101 @@ try {
   server.close();
 }
 
+// Instalação sem cache aberta offline: GPS inicia, a reconexão baixa a base uma única vez
+// e o diagnóstico copiado não expõe o ID gerado com coordenadas de um radar sem código.
+async function testReconnectAndDiagnostics(browser, fakeDevice, errors) {
+  const csvNoId = csv.replace('\nnear,', '\n,');
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', reducedMotion: 'reduce' });
+  let downloads = 0, releaseDownload, releaseRoad;
+  const downloadGate = new Promise(resolve => { releaseDownload = resolve; });
+  const roadGate = new Promise(resolve => { releaseRoad = resolve; });
+  await context.route('**/*', async route => {
+    const url = route.request().url();
+    if (url.startsWith(origin)) return route.continue();
+    if (url.includes('radares.csv')) {
+      downloads += 1;
+      await downloadGate;
+      return route.fulfill({ status: 200, contentType: 'text/plain', body: csvNoId });
+    }
+    if (url.includes('/api/interpreter')) {
+      await roadGate;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ elements: [
+        { type: 'way', id: 10, nodes: [1, 2], tags: { highway: 'primary', name: 'Avenida Teste', oneway: 'yes' },
+          geometry: [{ lat: -23.54, lon: -46.63 }, { lat: -23.56, lon: -46.63 }] }] }) });
+    }
+    return route.fulfill({ status: 503, body: 'Offline fixture' });
+  });
+  await context.addInitScript(fakeDevice);
+  await context.addInitScript(() => {
+    window.__online = false;
+    Object.defineProperty(Navigator.prototype, 'onLine', { configurable: true, get: () => window.__online });
+    window.__clipboard = null;
+    Object.defineProperty(Navigator.prototype, 'clipboard', { configurable: true,
+      get: () => ({ writeText: async text => { window.__clipboard = text; } }) });
+  });
+  const page = await context.newPage();
+  page.on('pageerror', error => errors.push(error.message));
+  try {
+    await page.goto(origin);
+    await page.waitForFunction(() => document.getElementById('datasetStatus').textContent === 'Base indisponível');
+    await page.locator('#startBtn').click();
+    await page.evaluate(() => window.__feedGps({ latitude: -23.548, speed: 6, heading: 180 }));
+    assert.equal(downloads, 0);
+    await page.evaluate(() => { window.__online = true; window.dispatchEvent(new Event('online')); });
+    await page.waitForFunction(() => document.getElementById('datasetStatus').textContent === 'Carregando base…');
+    await page.evaluate(() => { window.dispatchEvent(new Event('offline')); window.dispatchEvent(new Event('online')); window.dispatchEvent(new Event('online')); });
+    await page.waitForTimeout(100);
+    assert.equal(downloads, 1, 'Reconexões durante a carga reutilizam o mesmo download');
+    releaseDownload();
+    await page.waitForFunction(() => document.getElementById('datasetStatus').textContent.includes('131'));
+    assert.equal(downloads, 1, 'Nenhum download duplicado após concluir a carga');
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await page.waitForTimeout(100);
+    assert.equal(downloads, 1, 'Base presente não é baixada de novo ao reconectar');
+    assert.equal(await page.locator('#stopBtn').isVisible(), true);
+    pass('Reconexão sem cache com GPS ativo baixa a base uma vez, inclusive com reconexões repetidas durante a carga');
+    releaseRoad();
+    await page.waitForFunction(() => document.getElementById('diagLogBox').textContent.includes('Malha OSM carregada'));
+    await page.waitForTimeout(40);
+    await page.evaluate(() => window.__feedGps({ latitude: -23.548, speed: 6, heading: 180 }));
+    await page.waitForFunction(() => window.__spoken.length === 1);
+    await page.locator('#diagBtn').click();
+    await page.locator('#copyDiagBtn').click();
+    await page.waitForFunction(() => window.__clipboard !== null);
+    const copied = await page.evaluate(() => window.__clipboard);
+    assert.match(copied, /Histórico recente:/);
+    assert.match(copied, /Alerta por malha OSM emitido: ALERT_NEAR, radar, 111 m pela via\./);
+    for (const leak of ['-23.549', '-46.63', 'pardal-sp/']) assert.equal(copied.includes(leak), false, `Diagnóstico contém ${leak}`);
+    pass('Diagnóstico copiado descreve o alerta sem coordenadas nem ID bruto de radar sem código');
+  } finally { await context.close(); }
+}
 
+// A rede volta antes de o usuário tocar Iniciar: o início confirmado baixa a base.
+async function testReconnectBeforeStart(browser, fakeDevice, errors) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+  let downloads = 0;
+  await context.route('**/*', route => {
+    const url = route.request().url();
+    if (url.startsWith(origin)) return route.continue();
+    if (url.includes('radares.csv')) { downloads += 1; return route.fulfill({ status: 200, contentType: 'text/plain', body: csv }); }
+    return route.fulfill({ status: 503, body: 'Offline fixture' });
+  });
+  await context.addInitScript(fakeDevice);
+  await context.addInitScript(() => {
+    window.__online = false;
+    Object.defineProperty(Navigator.prototype, 'onLine', { configurable: true, get: () => window.__online });
+  });
+  const page = await context.newPage();
+  page.on('pageerror', error => errors.push(error.message));
+  try {
+    await page.goto(origin);
+    await page.waitForFunction(() => document.getElementById('datasetStatus').textContent === 'Base indisponível');
+    await page.evaluate(() => { window.__online = true; window.dispatchEvent(new Event('online')); });
+    await page.waitForTimeout(100);
+    assert.equal(downloads, 0, 'Sem monitoramento ativo, a reconexão não baixa a base');
+    await page.locator('#startBtn').click();
+    await page.waitForFunction(() => document.getElementById('datasetStatus').textContent.includes('131'));
+    assert.equal(downloads, 1);
+    pass('Rede restabelecida antes de Iniciar: o início do monitoramento baixa a base uma vez');
+  } finally { await context.close(); }
+}

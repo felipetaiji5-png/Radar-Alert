@@ -197,6 +197,21 @@ function loadDataset(force = false) {
   return datasetLoadPromise;
 }
 
+// Sem cache, uma sessão iniciada offline ficaria sem base até atualização manual.
+// Roda ao reconectar e ao confirmar o início, pois a rede pode voltar antes de Iniciar.
+function recoverDatasetInBackground() {
+  void recoverMissingDataset().catch(error => log(`Falha ao recuperar a base de radares: ${error.message}`));
+}
+async function recoverMissingDataset() {
+  if (clearingData || !trackingActive || radars.length || navigator.onLine === false) return;
+  // Uma carga em andamento que já consultou a rede basta; só repete se ela terminou offline.
+  const pending = await datasetLoadPromise;
+  if (pending && !pending.offline) return;
+  if (clearingData || !trackingActive || radars.length || navigator.onLine === false) return;
+  log('Monitoramento ativo com internet e sem base de radares; baixando a base.');
+  await loadDataset(false);
+}
+
 async function performDatasetLoad(force, signal) {
   $('datasetStatus').textContent = 'Carregando base…';
   setNotice('Consultando a base de dados Pardal para São Paulo.');
@@ -214,20 +229,21 @@ async function performDatasetLoad(force, signal) {
     },
     onError: error => log(`Falha ao obter ou salvar base: ${error.message}`)
   });
-  if (result.cancelled || signal.aborted) return;
+  if (result.cancelled || signal.aborted) return result;
   if (result.updated) {
     if (!result.data.persisted) setNotice('Base carregada para esta sessão, mas não foi possível salvá-la para uso offline.');
-    return;
+    return result;
   }
 
   if (radars.length) {
     $('datasetStatus').textContent = `${activeRadars.length.toLocaleString('pt-BR')} radares ativos`;
     setNotice(result.offline ? 'Sem internet. Usando a base já carregada; confira a data no Diagnóstico.' : 'Não foi possível atualizar. Usando a base já carregada; confira a data no Diagnóstico.');
-    return;
+    return result;
   }
   $('datasetStatus').textContent = 'Base indisponível';
   $('networkDot').classList.add('offline');
   setNotice(`Não foi possível carregar os radares. ${result.error?.message || 'Conecte-se à internet para baixar a base.'}`);
+  return result;
 }
 
 function deriveHeading(current, previous) {
@@ -311,6 +327,13 @@ async function ensureRoadNetwork(force = false, targetCenter = null) {
   return roadLoadPromise;
 }
 
+// O ID gerado sem código de origem contém coordenadas; o tag só precisa agrupar avisos do mesmo radar.
+const notificationTags = new Map();
+function notificationTagFor(radarId) {
+  if (!notificationTags.has(radarId)) notificationTags.set(radarId, `radar-${notificationTags.size + 1}`);
+  return notificationTags.get(radarId);
+}
+
 function updateRouteAlert(evaluation) {
   if (!trackingActive || lastFixIssue || !isFreshLiveFix(position?.timestamp)) return;
   if (IS_ANDROID_NATIVE && document.visibilityState !== 'visible') return;
@@ -318,9 +341,10 @@ function updateRouteAlert(evaluation) {
     const message = `${alert.text} Confira a sinalização da via.`;
     setNotice(message);
     speak(message);
-    log(`Alerta por malha OSM emitido: ${alert.radar.id}, ${alert.type}, ${alert.distance} m.`);
+    // O ID gerado sem código de origem contém coordenadas; o histórico é copiado pelo usuário.
+    log(`Alerta por malha OSM emitido: ${alert.type}, ${alert.radar.kind === 'SECTION' ? 'trecho' : 'radar'}, ${alert.distance} m pela via.`);
     if (settings.notifications && 'Notification' in window && Notification.permission === 'granted') {
-      try { new Notification('Radar Alert', { body: message, icon: '/icon.svg', tag: `radar-${alert.radar.id}` }); }
+      try { new Notification('Radar Alert', { body: message, icon: '/icon.svg', tag: notificationTagFor(alert.radar.id) }); }
       catch (error) { log(`Notificação não exibida: ${error.message}`); }
     }
   }
@@ -346,7 +370,8 @@ function updateNearby() {
         matchedSegment: mapMatch.segment,
         candidateRadars: routed,
         effectiveHeading: mapMatch.effectiveHeading,
-        confidence: mapMatch.confidence
+        confidence: mapMatch.confidence,
+        speedKmh: position.speed
       });
       next = evaluation.nextRadar;
       nearby = routed.length ? routed : radarReferences;
@@ -640,6 +665,7 @@ async function startTracking() {
       $('startBtn').classList.add('hidden'); $('stopBtn').classList.remove('hidden');
       setNotice('Monitoramento Android ativo. O serviço nativo mantém o GPS em segundo plano com notificação persistente.');
       log('Monitoramento iniciado pelo serviço Android em primeiro plano. Aguardando primeiro fix nativo.');
+      recoverDatasetInBackground();
       if (settings.notifications && !notificationsGranted) log('Permissão de notificações recusada; alertas por voz continuam disponíveis.');
       updateDiagnostics();
       return;
@@ -655,6 +681,7 @@ async function startTracking() {
     $('startBtn').classList.add('hidden'); $('stopBtn').classList.remove('hidden');
     setNotice('Monitoramento iniciado nesta página. A versão web não garante GPS contínuo com a tela bloqueada ou o navegador suspenso.');
     log(`Monitoramento GPS iniciado (web em primeiro plano; watchId ${watchId}). Aguardando primeira posição.`);
+    recoverDatasetInBackground();
     updateDiagnostics();
     void requestWakeLock();
     if (settings.notifications && 'Notification' in window && Notification.permission === 'default') {
@@ -1006,7 +1033,10 @@ setInterval(() => {
     if (Date.now() - position.timestamp > 90000) mapView.markAccuracyStale('GPS desatualizado · área de precisão oculta');
   }
 }, 15000);
-window.addEventListener('online', () => { $('networkDot').classList.add('online'); $('networkDot').classList.remove('offline'); updateDiagnostics(); });
+window.addEventListener('online', () => {
+  $('networkDot').classList.add('online'); $('networkDot').classList.remove('offline'); updateDiagnostics();
+  recoverDatasetInBackground();
+});
 window.addEventListener('offline', () => { $('networkDot').classList.add('offline'); $('networkDot').classList.remove('online'); updateDiagnostics(); });
 window.addEventListener('pagehide', () => { if (!IS_ANDROID_NATIVE) void stopTracking('página encerrada ou suspensa'); });
 

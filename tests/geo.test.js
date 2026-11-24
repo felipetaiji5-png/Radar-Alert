@@ -121,3 +121,95 @@ test('alerta de radar de trecho informa início e extensão mapeada', () => {
   assert.match(result.alerts[0].text, /Início do trecho de fiscalização/);
   assert.match(result.alerts[0].text, /1200 metros/);
 });
+
+function rearmScenario() {
+  let clock = 1_000_000;
+  const manager = new AlertManager({ now: () => clock });
+  const segment = { id: 'via-teste', roadKey: 'ref:SP-TESTE' };
+  const evaluate = (routeDistanceMeters, confidence = 'HIGH', heading = 90, speedKmh = null) => manager.processEvaluation({
+    matchedSegment: segment, effectiveHeading: heading, confidence, speedKmh,
+    candidateRadars: routeDistanceMeters == null ? [] : [{ id: 'radar-ficticio', active: true, limit: 60,
+      roadKey: segment.roadKey, effectiveDirection: 90, routeDistanceMeters }]
+  }).alerts.map(alert => alert.type);
+  const advance = ms => { clock += ms; };
+  return { evaluate, advance, manager };
+}
+
+test('alerta web volta a avisar numa segunda passagem no mesmo sentido', () => {
+  const { evaluate, advance } = rearmScenario();
+  assert.deepEqual(evaluate(120), ['ALERT_NEAR']);
+  advance(5000); assert.deepEqual(evaluate(null), [], 'radar saiu do trajeto após a passagem');
+  advance(20 * 60_000); assert.deepEqual(evaluate(null), []);
+  advance(5000); assert.deepEqual(evaluate(900), ['ALERT_FAR']);
+  advance(5000); assert.deepEqual(evaluate(120), ['ALERT_NEAR']);
+});
+
+test('rearme conta dois minutos desde a primeira ausência confirmada e reinicia ao reencontrar o radar', () => {
+  const { evaluate, advance } = rearmScenario();
+  const ahead = () => evaluate(120, 'HIGH', 90, 20);
+  assert.deepEqual(ahead(), ['ALERT_NEAR']);
+  advance(125_000);
+  evaluate(null, 'MEDIUM');
+  evaluate(null);
+  advance(1000);
+  assert.deepEqual(ahead(), [], 'a perda anterior de confirmação não conta como saída');
+  evaluate(null);
+  advance(119_999);
+  assert.deepEqual(ahead(), [], 'o retorno antes do prazo encerra esta ausência');
+  evaluate(null);
+  advance(60_000);
+  evaluate(null);
+  advance(60_000);
+  assert.deepEqual(ahead(), ['ALERT_NEAR'], 'ausências sucessivas preservam o início do prazo');
+});
+
+test('perda breve de GPS, cobertura ou confirmação não rearma o alerta', () => {
+  const { evaluate, advance } = rearmScenario();
+  assert.deepEqual(evaluate(120), ['ALERT_NEAR']);
+  advance(5000); assert.deepEqual(evaluate(100, 'MEDIUM'), []);
+  advance(5000); assert.deepEqual(evaluate(null), [], 'oscilação confirmada de poucos segundos');
+  advance(5000); assert.deepEqual(evaluate(90), []);
+  // Sem avaliações confirmadas por minutos (GPS/cobertura ausentes), o radar segue à frente.
+  advance(10 * 60_000); assert.deepEqual(evaluate(80), []);
+});
+
+test('veículo parado perto do radar não recebe aviso repetido', () => {
+  for (const speed of [0, null]) {
+    const { evaluate, advance } = rearmScenario();
+    assert.deepEqual(evaluate(60, 'HIGH', 90, 20), ['ALERT_NEAR']);
+    for (let i = 0; i < 60; i += 1) { advance(5000); assert.deepEqual(evaluate(i % 2 ? null : 4, 'HIGH', 90, speed), []); }
+    advance(10 * 60_000); assert.deepEqual(evaluate(3, 'HIGH', 90, speed), [], `oscilação parada depois do radar (velocidade ${speed})`);
+  }
+});
+
+test('nova passagem que entra na via perto do radar avisa com o veículo em movimento', () => {
+  const { evaluate, advance } = rearmScenario();
+  assert.deepEqual(evaluate(120, 'HIGH', 90, 40), ['ALERT_NEAR']);
+  advance(5000); evaluate(null, 'HIGH', 90, 40);
+  advance(20 * 60_000);
+  assert.deepEqual(evaluate(150, 'HIGH', 90, 30), ['ALERT_NEAR'], 'entrada por transversal a 150 m');
+});
+
+test('estados de radares que saíram do trajeto têm limite de memória', () => {
+  let clock = 0;
+  const manager = new AlertManager({ now: () => clock, minIntervalMs: 0, maxTrackedRadars: 3 });
+  const segment = { id: 'via', roadKey: 'ref:SP-TESTE' };
+  for (let i = 0; i < 10; i += 1) {
+    clock += 1000;
+    manager.processEvaluation({ matchedSegment: segment, effectiveHeading: 90, confidence: 'HIGH',
+      candidateRadars: [{ id: `r${i}`, active: true, roadKey: segment.roadKey, effectiveDirection: 90, routeDistanceMeters: 100 }] });
+  }
+  clock += 1000;
+  manager.processEvaluation({ matchedSegment: segment, effectiveHeading: 90, confidence: 'HIGH', candidateRadars: [] });
+  assert.equal(manager.radarStates.size, 3);
+  assert.deepEqual([...manager.radarStates.keys()], ['r7', 'r8', 'r9']);
+});
+
+test('rearme preserva direção e confiança exigidas', () => {
+  const { evaluate, advance } = rearmScenario();
+  assert.deepEqual(evaluate(120), ['ALERT_NEAR']);
+  advance(5000); evaluate(null);
+  advance(20 * 60_000);
+  assert.deepEqual(evaluate(900, 'HIGH', 270), [], 'sentido oposto');
+  assert.deepEqual(evaluate(900, 'MEDIUM'), [], 'via não confirmada');
+});

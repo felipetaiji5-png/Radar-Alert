@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { buildNativeRadarCatalog } from '../geo/native-sync.js';
 import assert from 'node:assert/strict';
 import { parseCsv, normalizePardalRows, haversineMeters, angleDiff, findNearbyRadars } from '../core.js';
 
@@ -106,4 +107,17 @@ test('sem heading, mostra candidato mas não considera rumo confirmado', () => {
   const found = findNearbyRadars({ lat: -23.549, lng: -46.63, heading: null, accuracy: 5 }, [radar]);
   assert.equal(found.length, 1);
   assert.equal(found[0].alertEligible, false);
+});
+
+test('reordenar linhas preserva IDs, representante e catálogo de duplicatas', () => {
+  const rows = [row(), row({lng: '-46.63001', source: 'DER-SP'}), row({direction_deg: ''}), row({direction_deg: ''})];
+  const original = normalizePardalRows(rows);
+  assert.deepEqual(buildNativeRadarCatalog(normalizePardalRows(rows.reverse())), buildNativeRadarCatalog(original));
+  assert.equal(new Set(original.map(r => r.id)).size, original.length);
+});
+
+test('a referência DER identifica o equipamento existente sem criar radar ou rumo', () => {
+  const [radar] = normalizePardalRows([row({lat: '-23.469077', lng: '-46.897965', source: 'DER-SP', direction_deg: ''})]);
+  assert.equal(radar.stationLabel, 'SP-312 · km 36,400 · REV250078');
+  assert.equal(radar.direction, null);
 });

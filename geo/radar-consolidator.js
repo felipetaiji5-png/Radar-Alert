@@ -49,10 +49,11 @@ function directionValue(value) {
 function deduplicate(radars) {
   const cellSize = 0.00008; // ~9 m em latitude
   const buckets = new Map();
-  const output = [];
+  const representatives = new Set();
   const key = (x, y) => `${x}:${y}`;
 
-  for (const radar of radars) {
+  const sorted = [...radars].sort((a, b) => a.lat - b.lat || a.lng - b.lng || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  for (const radar of sorted) {
     let duplicate = null;
     const gx = Math.floor(radar.lat / cellSize), gy = Math.floor(radar.lng / cellSize);
     for (let dx = -1; dx <= 1 && !duplicate; dx++) {
@@ -75,13 +76,13 @@ function deduplicate(radars) {
       continue;
     }
 
-    const item = { ...radar, duplicatesMerged: 0 };
-    output.push(item);
+    radar.duplicatesMerged = 0;
+    representatives.add(radar);
     const bucketKey = key(gx, gy);
     if (!buckets.has(bucketKey)) buckets.set(bucketKey, []);
-    buckets.get(bucketKey).push(item);
+    buckets.get(bucketKey).push(radar);
   }
-  return output;
+  return radars.filter(radar => representatives.has(radar));
 }
 
 export class RadarConsolidator {
@@ -98,7 +99,8 @@ export class RadarConsolidator {
 
   static consolidate(rows) {
     const normalized = [];
-    rows.forEach((row, index) => {
+    const occurrences = new Map();
+    rows.forEach(row => {
       const lat = parseNullableNumber(valueOf(row, 'lat', 'latitude'));
       const lng = parseNullableNumber(valueOf(row, 'lng', 'lon', 'long', 'longitude'));
       if (!this.isValidCoordinate(lat, lng)) return;
@@ -113,8 +115,15 @@ export class RadarConsolidator {
       const source = String(valueOf(row, 'source', 'fonte') ?? 'Pardal').trim() || 'Pardal';
       const rawId = valueOf(row, 'id', 'code', 'codigo', 'código');
 
+      let id = rawId;
+      if (!id) {
+        const key = [lat, lng, kind, direction, endLat, endLng, limit, activeInfo.active, source].join('/');
+        const occurrence = (occurrences.get(key) || 0) + 1;
+        occurrences.set(key, occurrence);
+        id = `pardal-sp/${key}/${occurrence}`;
+      }
       normalized.push({
-        id: String(rawId || `pardal-sp-${index}-${lat.toFixed(6)}-${lng.toFixed(6)}`),
+        id: String(id),
         lat, lng, kind, limit, rawLimit: rawLimit == null ? null : String(rawLimit),
         direction, active: activeInfo.active, statusKnown: activeInfo.statusKnown,
         source, updatedAt: valueOf(row, 'updated_at', 'updatedAt', 'data_atualizacao') || null,

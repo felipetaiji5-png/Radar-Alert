@@ -83,7 +83,9 @@ export class MapView {
       color: '#44dfc3', weight: 3, opacity: 0.8, dashArray: '5 5', interactive: false
     }).addTo(this.layers.trail);
   }
-  invalidateSize() { if (this.map) setTimeout(() => this.map.invalidateSize(), 80); }
+  // A navegação pode mover o mesmo contêiner entre o painel e a tela de mapa.
+  // Atualize a geometria antes do próximo render GPS, sem animação de pan.
+  invalidateSize() { this.map?.invalidateSize({ animate: false }); }
   center() {
     if (!this.position || !this.map || this.positionStale) {
       this.onNotice('Aguarde um novo ponto GPS válido para centralizar.'); return;
@@ -107,6 +109,13 @@ export class MapView {
   }
   firstFix(fix) { this.map?.setView([fix.lat, fix.lng], 16); }
   invalidateMarkers() { this.lastRadarPaintPosition = null; }
+  clearData() {
+    for (const layer of Object.values(this.layers || {})) layer.clearLayers();
+    this.trail = []; this.position = null; this.lastUpdate = null;
+    this.lastRadarPaintPosition = null; this.positionStale = true;
+    this.$('visibleCount').textContent = 'Nenhum equipamento carregado';
+    this.updateState();
+  }
   update({ position, mapMatch, roadProvider, nearby, spatialIndex }) {
     this.position = position;
     this.positionStale = false;
@@ -172,7 +181,8 @@ export class MapView {
         iconSize: [18, 18], iconAnchor: [9, 9]
       });
       const limit = item.limit == null ? 'Não informado' : `${item.limit} km/h`;
-      const html = `<b>${escapeHtml(radarKind(item.kind))}</b><br>Limite: ${escapeHtml(limit)}<br>Origem: ${escapeHtml(item.source)}<br>Distância aproximada em linha reta: ${escapeHtml(formatDistance(entry.distance))}<br>Sentido: ${escapeHtml(formatBearing(item.direction))}`;
+      const station = item.stationLabel ? `<br>${escapeHtml(item.stationLabel)}` : '';
+      const html = `<b>${escapeHtml(radarKind(item.kind))}</b>${station}<br>Limite: ${escapeHtml(limit)}<br>Origem: ${escapeHtml(item.source)}<br>Distância aproximada em linha reta: ${escapeHtml(formatDistance(entry.distance))}<br>Sentido: ${escapeHtml(formatBearing(item.direction))}`;
       L.marker([item.lat, item.lng], { icon }).addTo(radar).bindPopup(html);
     }
     this.$('visibleCount').textContent = `${visible.length} equipamentos mostrados · distância em linha reta`;

@@ -1,12 +1,14 @@
 package com.radalert.app;
 
 import android.Manifest;
+import androidx.core.content.ContextCompat;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.SystemClock;
 
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -56,12 +58,20 @@ public class RadarTrackingPlugin extends Plugin {
                 String eventName = intent.getStringExtra("event");
                 if (eventName == null) return;
                 JSObject payload = new JSObject();
+                long eventElapsed = intent.getLongExtra("eventElapsedNanos", 0);
+                long eventAge = LiveFixPolicy.ageMillis(eventElapsed, SystemClock.elapsedRealtimeNanos());
+                if (eventAge >= 0) payload.put("eventTimeMs", System.currentTimeMillis() - eventAge);
                 if (intent.hasExtra("latitude")) payload.put("latitude", intent.getDoubleExtra("latitude", 0));
                 if (intent.hasExtra("longitude")) payload.put("longitude", intent.getDoubleExtra("longitude", 0));
                 if (intent.hasExtra("accuracy")) payload.put("accuracy", intent.getFloatExtra("accuracy", 0));
                 if (intent.hasExtra("speedMps")) payload.put("speedMps", intent.getFloatExtra("speedMps", 0));
                 if (intent.hasExtra("bearingDegrees")) payload.put("bearingDegrees", intent.getFloatExtra("bearingDegrees", -1));
-                if (intent.hasExtra("timestampMs")) payload.put("timestampMs", intent.getLongExtra("timestampMs", 0));
+                if ("locationUpdate".equals(eventName)) {
+                    // Inclui o tempo de espera do broadcast: evento atrasado não vira fix novo.
+                    payload.put("timestampMs", LiveFixPolicy.webTimestamp(
+                        intent.getLongExtra("fixElapsedNanos", 0),
+                        SystemClock.elapsedRealtimeNanos(), System.currentTimeMillis()));
+                }
                 if (intent.hasExtra("message")) payload.put("message", intent.getStringExtra("message"));
                 if (intent.hasExtra("mode")) payload.put("mode", intent.getStringExtra("mode"));
                 if (intent.hasExtra("running")) payload.put("running", intent.getBooleanExtra("running", false));
@@ -69,11 +79,7 @@ public class RadarTrackingPlugin extends Plugin {
             }
         };
         IntentFilter filter = new IntentFilter(RadarTrackingService.ACTION_EVENT);
-        if (Build.VERSION.SDK_INT >= 33) {
-            getContext().registerReceiver(eventReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            getContext().registerReceiver(eventReceiver, filter);
-        }
+        ContextCompat.registerReceiver(getContext(), eventReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     @Override
@@ -277,11 +283,6 @@ public class RadarTrackingPlugin extends Plugin {
     public void start(PluginCall call) {
         if (!hasFineLocation()) {
             call.reject("Permissão de localização precisa não concedida.");
-            return;
-        }
-        File radarFile = new File(getContext().getFilesDir(), RadarTrackingService.RADARS_FILE);
-        if (!radarFile.isFile() || radarFile.length() == 0) {
-            call.reject("A base de radares ainda não foi sincronizada com o serviço Android.");
             return;
         }
         try {

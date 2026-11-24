@@ -1,6 +1,8 @@
 # Executar o Radar Alert no Android
 
-Use Node.js 22.12 ou superior, Android Studio com Android SDK e um dispositivo Android ou emulador. Execute os comandos na pasta que contém `package.json`.
+O [APK de teste](../downloads/RadarAlert-0.18.0-gps-debug.apk) usa o pacote `com.radalert.app`, versão 0.18.0 e código 18000. Para atualizar uma instalação existente, a assinatura deve ser compatível.
+
+Para compilar os fontes, use Node.js 22.12 ou superior, JDK 21, Android Studio com Android SDK 36 e um dispositivo ou emulador. Execute os comandos na pasta que contém `package.json`.
 
 ## Primeira instalação
 
@@ -27,7 +29,7 @@ O verificador compara as classes Java e a versão do conteúdo web copiado. Comp
 
 ## Verificar GPS e cobertura
 
-1. Abra o aplicativo, aguarde o carregamento da base e toque em **Iniciar monitoramento**. Conceda localização precisa. A permissão de notificações é solicitada quando a opção é ativada nas preferências.
+1. Abra o aplicativo e toque em **Iniciar monitoramento**, inclusive enquanto a base de radares carrega. Conceda localização precisa e aguarde uma posição válida. A permissão de notificações é solicitada quando a opção é ativada nas preferências.
 2. Com GPS recente e conexão, use **Preparar área do mapa** para salvar a malha de uma região. O serviço pode reutilizar até 12 regiões da revisão atual do catálogo.
 3. Em um emulador ou como passageiro, bloqueie a tela e verifique a continuidade da sessão. Fora das regiões salvas, os alertas por rota ficam suspensos até haver cobertura válida.
 4. Encerre em **Parar monitoramento** ou pela ação **Parar** da notificação.

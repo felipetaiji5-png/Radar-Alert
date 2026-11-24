@@ -7,3 +7,9 @@ www/
 local.properties
 .DS_Store
 Thumbs.db
+
+/qa-results/
+
+/outputs/
+
+/.playwright-cli/

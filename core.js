@@ -47,7 +47,28 @@ export function parseCsv(input) {
   return rows.map(values => Object.fromEntries(headers.map((header, i) => [header, (values[i] ?? '').trim()])));
 }
 
-export function normalizePardalRows(rows) { return RadarConsolidator.consolidate(rows); }
+// Planilha Radar do DER-SP (CC BY 4.0), consultada em 10/11/2026.
+// Vincular pelo ponto cadastrado evita atribuir o km a outro aparelho próximo.
+const regionalDER = new Map([
+  ['-23.453259,-46.914888', '39,400 · CEC250071'],
+  ['-23.478777,-46.889581', '34,860 · REV250068'],
+  ['-23.436331,-46.921955', '42,250 · CEV250368'],
+  ['-23.460039,-46.908983', '38,150 · CEV250379'],
+  ['-23.413214,-46.950475', '46,658 · CEV250397'],
+  ['-23.469077,-46.897965', '36,400 · REV250078'],
+  ['-23.433348,-46.931846', '43,550 · REV250079'],
+  ['-23.458319,-46.913272', '38,700 · REV250094']
+]);
+
+export function normalizePardalRows(rows) {
+  const radars = RadarConsolidator.consolidate(rows);
+  for (const radar of radars) {
+    if (radar.source !== 'DER-SP') continue;
+    const reference = regionalDER.get([radar.lat, radar.lng].join(','));
+    if (reference) radar.stationLabel = 'SP-312 · km ' + reference;
+  }
+  return radars;
+}
 
 export function findNearbyRadars(position, radars, { radius = 5000, maxResults = 30 } = {}) {
   const headingKnown = Number.isFinite(position.heading);

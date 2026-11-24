@@ -1,3 +1,11 @@
+# Radar Alert 0.18.0 — Verificação da edição GPS
+
+Em 24 de novembro de 2026, a integração dos fontes da edição de 22 de novembro passou nos 202 testes Node/Java, sem testes ignorados, e na checagem de sintaxe. Os 27 grupos de navegador passaram com GPS, catálogo e ponte Android simulados. Um dos fluxos recebeu posição com o catálogo pendente e sincronizou os dados após o download. As capturas do painel de referência em retrato e paisagem coincidiram com as da entrega original.
+
+O build web, a sincronização e a verificação do projeto Android e a compilação Gradle de depuração passaram. O APK disponibilizado é o original da entrega. A assinatura foi verificada, o pacote é `com.radalert.app` e a versão é 0.18.0 (18000). Os arquivos web distribuídos no APK coincidiram com o build desta integração. [Checksum do APK](../downloads/RadarAlert-0.18.0-gps-debug.apk.sha256)
+
+A recepção de GPS físico, a voz e a continuidade com a tela bloqueada em aparelho real permanecem pendentes.
+
 # Radar Alert 0.15.1 — Relatório de correção
 
 **Problema reproduzido por análise de código:** o antigo `loadRoadNetwork()` propagava `IllegalStateException` quando o arquivo OSM persistido não continha a revisão atual do catálogo. `onStartCommand()` capturava a exceção fora do carregamento de GPS e chamava `stopTracking()`, interrompendo todo o monitoramento. Isso explica os eventos `error` e `stopped` dos logs de 05:46:50. A origem precisa do snapshot (arquivo legado ou uma atualização concorrente) não pode ser estabelecida apenas pelo log.

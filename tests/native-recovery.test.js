@@ -44,7 +44,7 @@ test('0.15.1: operações nativas obedecem ordem e erro anterior não bloqueia r
 
 test('0.15.1: política de revisão recusa snapshot antigo em Java', t => {
   for (const command of ['java', 'javac']) {
-    const found = spawnSync(command, ['-version'], { encoding: 'utf8' });
+    const found = spawnSync(command, ['-version'], { encoding: 'utf8', timeout: 15000 });
     if (found.error || found.status !== 0) { t.skip('JDK 21 indisponível'); return; }
   }
   const temp = mkdtempSync(path.join(tmpdir(), 'radar-native-revision-'));
@@ -52,9 +52,9 @@ test('0.15.1: política de revisão recusa snapshot antigo em Java', t => {
     const javaDir = 'android-template/app/src/main/java/com/radalert/app/';
     const compile = spawnSync('javac', ['-encoding', 'UTF-8', '-d', temp,
       path.join(root, javaDir, 'RoadSnapshotRevision.java'),
-      path.join(root, 'tests/native/RoadSnapshotRevisionTest.java')], { encoding: 'utf8' });
+      path.join(root, 'tests/native/RoadSnapshotRevisionTest.java')], { encoding: 'utf8', timeout: 15000 });
     assert.equal(compile.status, 0, compile.stderr || compile.stdout);
-    const run = spawnSync('java', ['-cp', temp, 'com.radalert.app.RoadSnapshotRevisionTest'], { encoding: 'utf8' });
+    const run = spawnSync('java', ['-cp', temp, 'com.radalert.app.RoadSnapshotRevisionTest'], { encoding: 'utf8', timeout: 15000 });
     assert.equal(run.status, 0, run.stderr || run.stdout);
     assert.match(run.stdout, /7 checks Java/);
   } finally { rmSync(temp, { recursive: true, force: true }); }
@@ -80,6 +80,9 @@ test('0.15.1: integração sincroniza política nativa e número da versão', ()
   }
   assert.match(file('app.js'), /nativeWrites\.enqueue\(async \(\) =>/);
   assert.match(file('app.js'), /nativeWrites\.enqueue\(\(\) => writeNativeRoadNetwork/);
-  assert.match(file('scripts/postbuild.mjs'), /v0151/);
-  assert.equal(JSON.parse(file('package.json')).version, '0.15.1');
+  const version = JSON.parse(file('package.json')).version;
+  const cacheVersion = 'v' + version.replaceAll('.', '');
+  assert.ok(file('scripts/postbuild.mjs').includes(cacheVersion));
+  assert.ok(file('sw.js').includes(cacheVersion));
+  assert.ok(file('index.html').includes('v' + version));
 });
